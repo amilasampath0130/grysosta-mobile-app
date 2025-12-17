@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Grysosta",
+    "slug": "Grysosta",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/background-image.png",
+    "scheme": "grysosta",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.amilaSampath.Grysosta",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/background-image.png",
+        "backgroundImage": "./assets/images/background-image.png",
+        "monochrommage": "./assets/images/background-image.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.amila_sampath0130.Grysosta"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/background-image.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-video",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "97035c2b-4444-4638-abca-e1aa0e6f144a"
+      }
+    }
+  }
+}
