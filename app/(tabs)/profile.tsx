@@ -83,7 +83,7 @@ export default function Profile() {
       console.log("Profile data:", data);
 
       if (data.success) {
-        setUser(data.data.user);
+        setUser(data.user);
       } else {
         throw new Error(data.message || "Failed to fetch profile");
       }
