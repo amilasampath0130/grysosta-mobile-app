@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  
 } from "react-native";
 import React, { useState } from "react";
 import { router } from "expo-router";
@@ -61,14 +60,14 @@ export default function SignUp() {
       console.log("User data:", userData);
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/auth/register`,
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/register`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(userData),
-        }
+        },
       );
 
       console.log("Response status:", response.status);
@@ -77,15 +76,17 @@ export default function SignUp() {
       console.log("Response data:", data);
 
       if (response.ok && data.success) {
-        TokenStorage.setToken(data.data.token);
-        console.log("✅ Registration successful! Token stored.");
+        console.log("✅ Registration successful! OTP sent to email.");
 
         showAlert({
-          title: "Success",
-          message: "Account created successfully!",
+          title: "Verify Your Email",
+          message:
+            "We sent a 6-digit code to your email. Enter it to activate your account.",
           type: "success",
           onConfirm: () => {
-            router.replace("/(auth)/login");
+            router.replace(
+              `/(auth)/verifyOtp?email=${encodeURIComponent(userData.email)}`,
+            );
           },
         });
       } else {
@@ -102,7 +103,7 @@ export default function SignUp() {
       showAlert({
         title: "Network Error",
         message:
-          "Cannot connect to server. Please check:\n\n1. Your backend is running\n2. IP address is correct\n3. No firewall blocking",
+          "Cannot connect to server. Please check:\n\n1. Your backend is running\n2. API URL is correct (EXPO_PUBLIC_API_URL)\n3. No firewall blocking",
         type: "error",
       });
     } finally {
