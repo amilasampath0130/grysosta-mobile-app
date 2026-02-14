@@ -393,7 +393,6 @@ const GameHome: React.FC = () => {
                 <Text style={styles.userName}>
                   {state.userProfile.fullName}
                 </Text>
-                ! 👋
               </Text>
             </View>
           )}
@@ -427,7 +426,7 @@ const GameHome: React.FC = () => {
             <View style={styles.cooldownContainer}>
               <View style={styles.cooldownHeader}>
                 <Text style={styles.cooldownTitle}>
-                  ⏰ Next Tap Available In
+                  Next Tap Available In
                 </Text>
                 <Text style={styles.countdownText}>{state.countdown}</Text>
               </View>
