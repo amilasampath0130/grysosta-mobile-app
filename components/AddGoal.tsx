@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import React from "react";
-import { Float } from "react-native/Libraries/Types/CodegenTypesNamespace";
+import { Theme } from "@/theme";
 
 type AddGoalProps = {
   text: string;
@@ -20,11 +20,11 @@ const styles = StyleSheet.create({
   goalList: {
     margin: 8,
     padding: 8,
-    backgroundColor: "#6daaffff",
+    backgroundColor: Theme.colors.background_sand,
     borderRadius: 5,
   },
   goalListText: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontWeight: "bold",
   },
 });

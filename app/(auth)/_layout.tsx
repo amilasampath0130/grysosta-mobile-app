@@ -7,14 +7,14 @@ export default function AuthLayout() {
   return (
     <>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor={Theme.colors.background_deep}
+        barStyle="dark-content"
+        backgroundColor={Theme.colors.background_cream}
         translucent={Platform.OS === "android"}
       />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: Theme.colors.background_deep,
+            backgroundColor: Theme.colors.background_beige,
             ...Platform.select({
               ios: {
                 shadowColor: "#000",
@@ -29,7 +29,7 @@ export default function AuthLayout() {
             }),
           },
           headerShadowVisible: true,
-          headerTintColor: Theme.colors.text_primary,
+          headerTintColor: Theme.colors.text_charcoal,
           headerTitleStyle: {
             fontFamily: Theme.fonts.bold,
             fontSize: Platform.OS === "ios" ? 17 : 18,
@@ -41,7 +41,7 @@ export default function AuthLayout() {
             fontSize: 15,
           },
           contentStyle: {
-            backgroundColor: Theme.colors.background_deep,
+            backgroundColor: Theme.colors.background_cream,
           },
           animation: Platform.OS === "ios" ? "default" : "slide_from_right",
           gestureEnabled: true,

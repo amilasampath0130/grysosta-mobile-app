@@ -9,24 +9,34 @@ import {
 import React, { useState } from "react";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Ionicons } from "@expo/vector-icons";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useAlert } from "@/contexts/AlertContext";
+import PhoneInputWithCountry from "@/components/PhoneInputWithCountry";
+import { Country, CountryCode } from "react-native-country-picker-modal";
 export default function SignUp() {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [countryCode, setCountryCode] = useState<CountryCode>("US");
+  const [callingCode, setCallingCode] = useState("1");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { showAlert } = useAlert();
 
   const handleSignUp = async () => {
     // Validation
-    if (!name || !userName || !email || !password) {
+    if (!name || !userName || !email || !password || !confirmPassword) {
       showAlert({
         title: "Missing Information",
         message: "Please fill in all required fields",
@@ -44,17 +54,31 @@ export default function SignUp() {
       return;
     }
 
+    if (password !== confirmPassword) {
+      showAlert({
+        title: "Password Mismatch",
+        message: "Passwords do not match. Please try again.",
+        type: "warning",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       console.log("Sending signup request...");
+
+      const trimmedMobile = mobileNumber.replace(/\s+/g, "").trim();
+      const fullMobileNumber = trimmedMobile
+        ? `+${callingCode}${trimmedMobile}`
+        : "";
 
       const userData = {
         name: name.trim(),
         username: userName.trim(),
         email: email.trim().toLowerCase(),
         password: password,
-        mobileNumber: mobileNumber.trim() || "",
+        mobileNumber: fullMobileNumber,
       };
 
       console.log("User data:", userData);
@@ -111,8 +135,15 @@ export default function SignUp() {
     }
   };
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAwareScrollView enableOnAndroid={true} extraScrollHeight={40}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        extraScrollHeight={40}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top },
+        ]}
+      >
         <View style={styles.container}>
           {/* Name Input */}
           <View style={styles.TextInputContainer}>
@@ -128,7 +159,7 @@ export default function SignUp() {
                 placeholder="Enter Your Name"
                 value={name}
                 onChangeText={setName}
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
               />
             </View>
@@ -148,7 +179,7 @@ export default function SignUp() {
                 placeholder="Enter Your Username"
                 value={userName}
                 onChangeText={setUserName}
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
                 autoCapitalize="none"
               />
@@ -171,7 +202,7 @@ export default function SignUp() {
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
               />
             </View>
@@ -196,7 +227,7 @@ export default function SignUp() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
               />
               <TouchableOpacity
@@ -207,33 +238,63 @@ export default function SignUp() {
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={20}
-                  color={Theme.colors.text_Secondary}
+                  color={Theme.colors.text_brown_gray}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Confirm Password Input */}
+          <View style={styles.TextInputContainer}>
+            <Text style={styles.InputContainerText}>Confirm Password *</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.TextInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Re-enter Your Password"
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor={Theme.colors.text_earth}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeIcon}
+                disabled={isLoading}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={Theme.colors.text_brown_gray}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Mobile Number Input */}
-          <View style={styles.TextInputContainer}>
+          <View style={[styles.TextInputContainer, styles.mobileInputSpacing]}>
             <Text style={styles.InputContainerText}>
               Mobile Number (Optional)
             </Text>
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="phone-portrait-outline"
-                size={20}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.TextInput}
-                placeholder="Enter Your Mobile Number"
-                keyboardType="phone-pad"
-                value={mobileNumber}
-                onChangeText={setMobileNumber}
-                placeholderTextColor={Theme.colors.text_Secondary}
-                editable={!isLoading}
-              />
-            </View>
+            <PhoneInputWithCountry
+              value={mobileNumber}
+              onChangeText={setMobileNumber}
+              countryCode={countryCode}
+              callingCode={callingCode}
+              onSelectCountry={(country: Country) => {
+                setCountryCode(country.cca2);
+                setCallingCode(country.callingCode[0] || "1");
+              }}
+              placeholder="Enter your mobile number"
+              disabled={isLoading}
+            />
           </View>
 
           {/* Submit Button */}
@@ -244,7 +305,7 @@ export default function SignUp() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={Theme.colors.background_cream} />
               ) : (
                 <Text style={styles.ButtonText}>Sign Up</Text>
               )}
@@ -272,13 +333,16 @@ export default function SignUp() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
     paddingVertical: 20,
   },
   buttonContainer: {
@@ -289,7 +353,7 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     height: 50,
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
@@ -300,34 +364,37 @@ const styles = StyleSheet.create({
   ButtonText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: Theme.colors.background_alien,
+    color: Theme.colors.background_cream,
   },
   TextInput: {
     flex: 1,
     height: 50,
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     fontSize: 16,
   },
   TextInputContainer: {
     width: "90%",
     marginBottom: 15,
   },
+  mobileInputSpacing: {
+    marginTop: 16,
+  },
   inputContainer: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Theme.colors.text_Secondary + "30",
+    borderColor: Theme.colors.background_sand,
   },
   inputIcon: {
     marginRight: 10,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
   },
   InputContainerText: {
     paddingBottom: 8,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontSize: 14,
     fontWeight: "500",
     marginLeft: 5,
@@ -337,12 +404,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   createAccountText: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontWeight: "500",
     marginLeft: 5,
   },
   signUpContainerText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
   },
   eyeIcon: {
     padding: 8,

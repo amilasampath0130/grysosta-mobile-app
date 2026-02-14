@@ -41,7 +41,7 @@ const About = () => {
   // Handler functions
   const handleSocialPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err)
+      console.error("Failed to open URL:", err),
     );
   };
 
@@ -56,7 +56,7 @@ const About = () => {
         <Ionicons
           name={feature.icon as any}
           size={24}
-          color={Theme.colors.gold}
+          color={Theme.colors.accent_terracotta}
         />
       </View>
       <Text style={styles.featureTitle}>{feature.title}</Text>
@@ -88,7 +88,7 @@ const About = () => {
       <FontAwesome5
         name={social.icon as any}
         size={18}
-        color={Theme.colors.gold}
+        color={Theme.colors.accent_terracotta}
       />
     </TouchableOpacity>
   );
@@ -134,7 +134,7 @@ const About = () => {
               <MaterialCommunityIcons
                 name="target"
                 size={32}
-                color={Theme.colors.gold}
+                color={Theme.colors.accent_terracotta}
                 style={styles.missionIcon}
               />
               <Text style={styles.missionText}>
@@ -181,7 +181,11 @@ const About = () => {
                 onPress={handleContactPress}
                 activeOpacity={0.8}
               >
-                <Ionicons name="mail" size={20} color="white" />
+                <Ionicons
+                  name="mail"
+                  size={20}
+                  color={Theme.colors.background_cream}
+                />
                 <Text style={styles.contactButtonText}>Contact Support</Text>
               </TouchableOpacity>
 
@@ -209,7 +213,7 @@ export default About;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   mainContainer: {
     flex: 1,
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: 70,
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     }),
   },
   headerText: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontSize: 24,
     fontWeight: "bold",
     fontFamily: Theme.fonts.bold,
@@ -252,26 +256,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroTitle: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontSize: 28,
     fontFamily: Theme.fonts.bold,
     textAlign: "center",
     marginBottom: 8,
   },
   heroSubtitle: {
-    color: "white",
+    color: Theme.colors.text_brown_gray,
     fontSize: 16,
     fontFamily: Theme.fonts.regular,
     textAlign: "center",
     lineHeight: 22,
-    opacity: 0.8,
   },
   section: {
     marginBottom: 30,
     paddingHorizontal: 20,
   },
   sectionTitle: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontSize: 22,
     fontFamily: Theme.fonts.bold,
     marginBottom: 16,
@@ -283,7 +286,7 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: "48%",
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -304,28 +307,27 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "rgba(255,215,0,0.1)",
+    backgroundColor: "rgba(184, 92, 56, 0.12)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   featureTitle: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontSize: 16,
     fontFamily: Theme.fonts.bold,
     textAlign: "center",
     marginBottom: 4,
   },
   featureDescription: {
-    color: "white",
+    color: Theme.colors.text_brown_gray,
     fontSize: 12,
     fontFamily: Theme.fonts.regular,
     textAlign: "center",
-    opacity: 0.8,
     lineHeight: 16,
   },
   missionCard: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     padding: 20,
     borderRadius: 12,
     flexDirection: "row",
@@ -347,12 +349,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   missionText: {
-    color: "white",
+    color: Theme.colors.text_brown_gray,
     fontSize: 14,
     fontFamily: Theme.fonts.regular,
     lineHeight: 20,
     flex: 1,
-    opacity: 0.9,
   },
   teamContainer: {
     flexDirection: "row",
@@ -369,23 +370,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   teamName: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontSize: 14,
     fontFamily: Theme.fonts.bold,
     textAlign: "center",
     marginBottom: 2,
   },
   teamRole: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_clay,
     fontSize: 12,
     fontFamily: Theme.fonts.regular,
     textAlign: "center",
-    opacity: 0.8,
   },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     padding: 20,
     borderRadius: 12,
     ...Platform.select({
@@ -405,20 +405,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontSize: 24,
     fontFamily: Theme.fonts.bold,
     marginBottom: 4,
   },
   statLabel: {
-    color: "white",
+    color: Theme.colors.text_brown_gray,
     fontSize: 12,
     fontFamily: Theme.fonts.regular,
     textAlign: "center",
-    opacity: 0.8,
   },
   contactCard: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     padding: 20,
     borderRadius: 12,
     ...Platform.select({
@@ -435,7 +434,7 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     flexDirection: "row",
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
@@ -443,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contactButtonText: {
-    color: Theme.colors.background_deep,
+    color: Theme.colors.background_cream,
     fontSize: 16,
     fontFamily: Theme.fonts.bold,
     marginLeft: 8,
@@ -456,7 +455,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(163, 111, 78, 0.15)",
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 6,
@@ -466,20 +465,18 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
+    borderTopColor: Theme.colors.background_sand,
     marginTop: 10,
   },
   footerText: {
-    color: "white",
+    color: Theme.colors.text_earth,
     fontSize: 12,
     fontFamily: Theme.fonts.regular,
-    opacity: 0.6,
     marginBottom: 4,
   },
   footerVersion: {
-    color: "white",
+    color: Theme.colors.text_earth,
     fontSize: 11,
     fontFamily: Theme.fonts.regular,
-    opacity: 0.5,
   },
 });

@@ -156,7 +156,7 @@ const VerifyOtp = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter verification code"
-              placeholderTextColor={Theme.colors.text_Secondary}
+              placeholderTextColor={Theme.colors.text_earth}
               value={otp}
               onChangeText={setOtp}
               keyboardType="number-pad"
@@ -171,7 +171,7 @@ const VerifyOtp = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Theme.colors.background_cream} />
             ) : (
               <Text style={styles.buttonText}>Verify</Text>
             )}
@@ -199,39 +199,39 @@ const VerifyOtp = () => {
 export default VerifyOtp;
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: Theme.colors.background_deep },
+  safeArea: { flex: 1, backgroundColor: Theme.colors.background_cream },
   container: {
     flex: 1,
     paddingVertical: 24,
     alignItems: "center",
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     marginTop: 24,
   },
   subtitle: {
     fontSize: 14,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     marginTop: 8,
     paddingHorizontal: 24,
     textAlign: "center",
   },
-  email: { color: Theme.colors.gold },
+  email: { color: Theme.colors.accent_terracotta },
   inputContainer: {
     width: "90%",
     marginTop: 24,
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Theme.colors.text_Secondary + "30",
+    borderColor: Theme.colors.background_sand,
   },
   input: {
     height: 50,
     paddingHorizontal: 12,
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     fontSize: 18,
     letterSpacing: 2,
     textAlign: "center",
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   button: {
     width: "90%",
     height: 50,
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
@@ -247,10 +247,10 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: {
-    color: Theme.colors.background_alien,
+    color: Theme.colors.background_cream,
     fontSize: 18,
     fontWeight: "bold",
   },
   link: { marginTop: 16 },
-  linkText: { color: Theme.colors.gold },
+  linkText: { color: Theme.colors.accent_terracotta },
 });

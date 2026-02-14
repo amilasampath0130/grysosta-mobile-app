@@ -1,27 +1,39 @@
 export const Colors = {
-  primary: "#1E90FF", // Bright royal blue — keep for contrast
-  secondary: "#FF6F61", // Coral — warm accent
+  // Brand
+  primary: "#2563EB", // calm professional blue
+  secondary: "#1F2937", // charcoal gray
 
   // Backgrounds
-  background_deep: "#0E161F", // Deeper blue-black for a premium dark base
-  background_alien: "#182028", // Slightly softer dark for content areas
-  muted: "#232831", // Neutral dark grey for cards or dividers
+  background_cream: "#F9FAFB", // main app background (soft white)
+  background_beige: "#FFFFFF", // cards
+  background_sand: "#F3F4F6", // sections / inputs
 
-  // Text Colors (Refined)
-  text_primary: "#E3E8EF", // Softer white — not too bright, easier on eyes
-  text_Secondary: "#B8C1CC", // Muted cool grey for subtitles
-  text_muted: "#7D8590", // Optional: for placeholders or low emphasis text
+  // Text Colors
+  text_charcoal: "#111827", // main strong text
+  text_brown_gray: "#374151", // secondary text
+  text_earth: "#9CA3AF", // muted / placeholder
 
   // Accent Colors
-  gold: "#F4C542", // Modern soft gold
-  gold_1: "#FFB84D", // Slightly warmer highlight
-  gold_2: "#FF9F1C", // Bright orange-gold accent
-  gold_3: "#FFD580", // Pale gold for gradients or hover
+  accent_terracotta: "#3B82F6", // main buttons
+  accent_clay: "#60A5FA", // hover
+  accent_olive: "#DBEAFE", // soft selection highlight
+
+  // Legacy aliases (compatibility)
+  background_deep: "#F9FAFB",
+  background_alien: "#FFFFFF",
+  muted: "#F3F4F6",
+  text_primary: "#111827",
+  text_secondary: "#374151",
+  text_muted: "#9CA3AF",
+  gold: "#3B82F6",
+  gold_1: "#60A5FA",
+  gold_2: "#93C5FD",
+  gold_3: "#DBEAFE",
 
   // States
-  error: "#FF4C4C", // Keep same bright red
-  success: "#4CAF50", // Add success tone
-  warning: "#FFA726",
-  info: "#2196F3",
-  border: "#ddd",
+  error: "#EF4444",
+  success: "#22C55E",
+  warning: "#F59E0B",
+  info: "#0EA5E9",
+  border: "#E5E7EB",
 };

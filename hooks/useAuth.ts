@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
 
 export const useAuth = () => {
   const {
@@ -8,34 +8,28 @@ export const useAuth = () => {
     isAuthenticated,
     isLoading,
     login,
-    signup,
+    register,
     logout,
-    initializeAuth,
     updateUser,
+    sendVerificationCode,
+    verifyAndRegister,
+    resendVerificationCode,
   } = useAuthStore();
 
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    const initAuth = async () => {
-      await initializeAuth();
-      setIsInitialized(true);
-    };
-
-    if (!isInitialized) {
-      initAuth();
-    }
-  }, [initializeAuth, isInitialized]);
+  const [isInitialized, setIsInitialized] = useState(true);
 
   return {
     user,
     token,
     isAuthenticated: isAuthenticated && !!user && !!token,
-    isLoading: isLoading || !isInitialized,
+    isLoading,
     login,
-    signup,
+    register,
     logout,
     updateUser,
+    sendVerificationCode,
+    verifyAndRegister,
+    resendVerificationCode,
     isInitialized,
   };
 };

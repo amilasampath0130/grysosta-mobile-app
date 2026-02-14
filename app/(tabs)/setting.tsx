@@ -53,7 +53,13 @@ const Settings: React.FC<Props> = ({ navigation }) => {
   const onLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: () => {/* perform logout */} },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          /* perform logout */
+        },
+      },
     ]);
   };
 
@@ -62,9 +68,14 @@ const Settings: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Profile */}
         <View style={styles.cardRow}>
-          <View style={[styles.avatarWrapper, { width: avatarSize, height: avatarSize }]}>
+          <View
+            style={[
+              styles.avatarWrapper,
+              { width: avatarSize, height: avatarSize },
+            ]}
+          >
             <Image
-            //   source={Images.profile ?? Images.logo}
+              //   source={Images.profile ?? Images.logo}
               style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
               resizeMode="cover"
             />
@@ -74,9 +85,15 @@ const Settings: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.subText}>Free player • Member</Text>
             <TouchableOpacity
               style={styles.editBtn}
-              onPress={() => Alert.alert("Edit profile", "Open edit profile screen")}
+              onPress={() =>
+                Alert.alert("Edit profile", "Open edit profile screen")
+              }
             >
-              <Ionicons name="create-outline" size={16} color={Theme.colors.background_alien} />
+              <Ionicons
+                name="create-outline"
+                size={16}
+                color={Theme.colors.background_cream}
+              />
               <Text style={styles.editText}> Edit</Text>
             </TouchableOpacity>
           </View>
@@ -94,7 +111,10 @@ const Settings: React.FC<Props> = ({ navigation }) => {
             <Switch
               value={isDark}
               onValueChange={(v) => setIsDark(v)}
-              trackColor={{ true: Theme.colors.gold, false: Theme.colors.background_deep }}
+              trackColor={{
+                true: Theme.colors.accent_terracotta,
+                false: Theme.colors.background_sand,
+              }}
             />
           </View>
 
@@ -114,7 +134,10 @@ const Settings: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.rowTitle}>Sound</Text>
               <Text style={styles.rowSubtitle}>Game audio effects</Text>
             </View>
-            <Switch value={soundEnabled} onValueChange={(v) => setSoundEnabled(v)} />
+            <Switch
+              value={soundEnabled}
+              onValueChange={(v) => setSoundEnabled(v)}
+            />
           </View>
         </View>
 
@@ -124,34 +147,66 @@ const Settings: React.FC<Props> = ({ navigation }) => {
 
           <TouchableOpacity style={styles.actionRow} onPress={onClearCache}>
             <View style={styles.actionLeft}>
-              <Ionicons name="trash-outline" size={18} color={Theme.colors.text_Secondary} />
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={Theme.colors.text_brown_gray}
+              />
               <Text style={styles.actionText}> Clear cache</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Theme.colors.text_Secondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Theme.colors.text_brown_gray}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow} onPress={onContactSupport}>
             <View style={styles.actionLeft}>
-              <Ionicons name="chatbox-ellipses-outline" size={18} color={Theme.colors.text_Secondary} />
+              <Ionicons
+                name="chatbox-ellipses-outline"
+                size={18}
+                color={Theme.colors.text_brown_gray}
+              />
               <Text style={styles.actionText}> Contact support</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Theme.colors.text_Secondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Theme.colors.text_brown_gray}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow} onPress={onAbout}>
             <View style={styles.actionLeft}>
-              <Ionicons name="information-circle-outline" size={18} color={Theme.colors.text_Secondary} />
+              <Ionicons
+                name="information-circle-outline"
+                size={18}
+                color={Theme.colors.text_brown_gray}
+              />
               <Text style={styles.actionText}> About the app</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Theme.colors.text_Secondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Theme.colors.text_brown_gray}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionRow} onPress={onRate}>
             <View style={styles.actionLeft}>
-              <Ionicons name="star-outline" size={18} color={Theme.colors.text_Secondary} />
+              <Ionicons
+                name="star-outline"
+                size={18}
+                color={Theme.colors.text_brown_gray}
+              />
               <Text style={styles.actionText}> Rate us</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Theme.colors.text_Secondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Theme.colors.text_brown_gray}
+            />
           </TouchableOpacity>
         </View>
 
@@ -159,7 +214,10 @@ const Settings: React.FC<Props> = ({ navigation }) => {
         <View style={styles.card}>
           <Text style={styles.cardBody}>Version 1.0.0</Text>
 
-          <TouchableOpacity style={[styles.ctaButton, { marginTop: 12 }]} onPress={onLogout}>
+          <TouchableOpacity
+            style={[styles.ctaButton, { marginTop: 12 }]}
+            onPress={onLogout}
+          >
             <Text style={styles.ctaText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -175,7 +233,7 @@ export default Settings;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   container: {
     width: "100%",
@@ -194,7 +252,7 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
   },
   avatar: {
     borderRadius: 999,
@@ -204,12 +262,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   name: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.bold,
     fontSize: 16,
   },
   subText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_earth,
     fontFamily: Theme.fonts.regular,
     fontSize: 12,
     marginTop: 4,
@@ -218,14 +276,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 6,
     alignSelf: "flex-start",
   },
   editText: {
-    color: Theme.colors.background_alien,
+    color: Theme.colors.background_cream,
     fontFamily: Theme.fonts.bold,
     fontSize: 13,
   },
@@ -233,14 +291,14 @@ const styles = StyleSheet.create({
   /* Card */
   card: {
     width: "100%",
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 8,
     overflow: "hidden",
     padding: 12,
     marginBottom: 12,
   },
   cardTitle: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.bold,
     fontSize: 15,
     marginBottom: 8,
@@ -254,15 +312,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 0.5,
-    borderBottomColor: Theme.colors.background_deep,
+    borderBottomColor: Theme.colors.background_sand,
   },
   rowTitle: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.medium,
     fontSize: 14,
   },
   rowSubtitle: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_earth,
     fontFamily: Theme.fonts.regular,
     fontSize: 12,
     marginTop: 2,
@@ -276,14 +334,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: Theme.colors.background_deep,
+    borderBottomColor: Theme.colors.background_sand,
   },
   actionLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
   actionText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: 14,
     marginLeft: 8,
@@ -291,7 +349,7 @@ const styles = StyleSheet.create({
 
   /* Footer / CTA */
   cardBody: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_earth,
     fontFamily: Theme.fonts.regular,
     fontSize: 13,
   },
@@ -299,12 +357,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     borderRadius: 8,
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     alignItems: "center",
     justifyContent: "center",
   },
   ctaText: {
-    color: Theme.colors.background_alien,
+    color: Theme.colors.background_cream,
     fontFamily: Theme.fonts.bold,
     fontSize: 15,
   },

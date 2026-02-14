@@ -1,12 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Theme } from '@/theme';
-import { HomeSectionProps } from '@/types/home';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Theme } from "@/theme";
+import { HomeSectionProps } from "@/types/home";
 
 const SectionHeader: React.FC<HomeSectionProps> = ({
   title,
   showSeeMore = true,
-  onSeeMorePress
+  onSeeMorePress,
 }) => {
   return (
     <View style={styles.container}>
@@ -29,13 +29,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   title: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontSize: 20,
     fontWeight: "bold",
     fontFamily: Theme.fonts.bold,
   },
   seeMore: {
-    color: "white",
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.medium,
     fontSize: 15,
   },

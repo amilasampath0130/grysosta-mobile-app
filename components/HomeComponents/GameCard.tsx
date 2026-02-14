@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Images } from '@/assets/images/images';
-import { router } from 'expo-router';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Images } from "@/assets/images/images";
+import { router } from "expo-router";
+import { Theme } from "@/theme";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 interface GameCardProps {
   onPress?: () => void;
@@ -22,7 +23,7 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
     if (onPress) {
       onPress();
     } else {
-      router.push('/(Game)/gameHome');
+      router.push("/(Game)/gameHome");
     }
   };
 
@@ -40,7 +41,11 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
             <Text style={styles.subtitle}>Tap to reveal instant rewards</Text>
           </View>
           <View style={styles.pointsBadge}>
-            <Ionicons name="diamond" size={16} color="#FFD700" />
+            <Ionicons
+              name="diamond"
+              size={16}
+              color={Theme.colors.accent_clay}
+            />
             <Text style={styles.pointsText}>
               {/* please add the rewards coin */}
             </Text>
@@ -51,15 +56,16 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
         <View style={styles.content}>
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
-              <Image 
-                source={Images.logo} 
+              <Image
+                source={Images.logo}
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
             <View style={styles.descriptionContainer}>
               <Text style={styles.description}>
-                Uncover hidden tiles for instant rewards. Quick, engaging, and rewarding gameplay experience.
+                Uncover hidden tiles for instant rewards. Quick, engaging, and
+                rewarding gameplay experience.
               </Text>
             </View>
           </View>
@@ -67,15 +73,27 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
           {/* Features Grid */}
           <View style={styles.featuresGrid}>
             <View style={styles.featureItem}>
-              <Ionicons name="flash" size={16} color="#4CAF50" />
+              <Ionicons
+                name="flash"
+                size={16}
+                color={Theme.colors.accent_olive}
+              />
               <Text style={styles.featureText}>Fast</Text>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="trophy" size={16} color="#FFD700" />
+              <Ionicons
+                name="trophy"
+                size={16}
+                color={Theme.colors.accent_clay}
+              />
               <Text style={styles.featureText}>Rewards</Text>
             </View>
             <View style={styles.featureItem}>
-              <Ionicons name="infinite" size={16} color="#4a90e2" />
+              <Ionicons
+                name="infinite"
+                size={16}
+                color={Theme.colors.accent_olive}
+              />
               <Text style={styles.featureText}>Unlimited</Text>
             </View>
           </View>
@@ -85,7 +103,11 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
         <View style={styles.actionSection}>
           <View style={styles.playButton}>
             <Text style={styles.playButtonText}>Play Now</Text>
-            <Ionicons name="arrow-forward" size={18} color="white" />
+            <Ionicons
+              name="arrow-forward"
+              size={18}
+              color={Theme.colors.background_cream}
+            />
           </View>
         </View>
       </View>
@@ -95,70 +117,70 @@ const GameCard: React.FC<GameCardProps> = ({ onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: "100%",
     marginVertical: 8,
   },
   card: {
-    backgroundColor: '#1a2530',
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#2a3a4a',
+    borderColor: Theme.colors.background_sand,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 16,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    color: 'white',
+    color: Theme.colors.text_charcoal,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.7)',
+    color: Theme.colors.text_earth,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   pointsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(184, 92, 56, 0.12)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: "rgba(184, 92, 56, 0.3)",
   },
   pointsText: {
-    color: '#FFD700',
+    color: Theme.colors.accent_terracotta,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     marginLeft: 4,
   },
   content: {
     marginBottom: 20,
   },
   logoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   logoContainer: {
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(163, 111, 78, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
     borderWidth: 1,
-    borderColor: 'rgba(74, 144, 226, 0.2)',
+    borderColor: "rgba(163, 111, 78, 0.25)",
   },
   logo: {
     width: 36,
@@ -169,51 +191,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   description: {
-    color: 'rgba(255,255,255,0.8)',
+    color: Theme.colors.text_brown_gray,
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: "400",
     lineHeight: 20,
   },
   featuresGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   featureItem: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(244, 230, 212, 0.6)",
     paddingVertical: 8,
     paddingHorizontal: 4,
     borderRadius: 8,
     marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: "rgba(163, 111, 78, 0.2)",
   },
   featureText: {
-    color: 'rgba(255,255,255,0.9)',
+    color: Theme.colors.text_charcoal,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 6,
   },
   actionSection: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: Theme.colors.background_sand,
     paddingTop: 16,
   },
   playButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4a90e2',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Theme.colors.accent_terracotta,
     paddingVertical: 14,
     borderRadius: 12,
   },
   playButtonText: {
-    color: 'white',
+    color: Theme.colors.background_cream,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginRight: 8,
   },
 });

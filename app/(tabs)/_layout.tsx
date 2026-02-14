@@ -2,47 +2,44 @@ import React from "react";
 import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity, Alert } from "react-native";
+import { Theme } from "@/theme";
 
 // ✅ ADD DEFAULT EXPORT
 export default function TabsLayout() {
   const router = useRouter();
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          // For now, just navigate to auth
+          router.replace("/(auth)");
         },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: () => {
-            // For now, just navigate to auth
-            router.replace("/(auth)");
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <Tabs
       screenOptions={{
         headerStyle: {
-          backgroundColor: "#101923",
+          backgroundColor: Theme.colors.background_beige,
         },
         headerShadowVisible: false,
-        headerTintColor: "#fff",
+        headerTintColor: Theme.colors.text_charcoal,
         tabBarStyle: {
-          backgroundColor: "#101923",
-          borderTopColor: "#1a2530",
+          backgroundColor: Theme.colors.background_cream,
+          borderTopColor: Theme.colors.background_sand,
         },
-        tabBarActiveTintColor: "#ffd700",
-        tabBarInactiveTintColor: "#8899ac",
-        headerShown:false
+        tabBarActiveTintColor: Theme.colors.accent_terracotta,
+        tabBarInactiveTintColor: Theme.colors.text_earth,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -78,7 +75,11 @@ export default function TabsLayout() {
         options={{
           title: "About",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="information-circle-outline" size={size} color={color} />
+            <Ionicons
+              name="information-circle-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

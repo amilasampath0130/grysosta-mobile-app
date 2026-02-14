@@ -5,6 +5,7 @@ type NewGoalProps = {
 
 import { StyleSheet, TextInput, View, Button } from "react-native";
 import React, { useState } from "react";
+import { Theme } from "@/theme";
 
 // ✅ Step 2: Define component with props
 const NewGoal: React.FC<NewGoalProps> = ({ onAddGoal }) => {
@@ -26,7 +27,7 @@ const NewGoal: React.FC<NewGoalProps> = ({ onAddGoal }) => {
     <View style={styles.NewgoalContainer}>
       <TextInput
         placeholder="enter your text here"
-        placeholderTextColor="#ccc"
+        placeholderTextColor={Theme.colors.text_earth}
         style={styles.textInput}
         onChangeText={handleGoalInput}
         value={newGoal} // ✅ Controlled input
@@ -41,8 +42,8 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 2,
     width: "70%",
-    borderColor: "#ccc",
-    color: "#ccc",
+    borderColor: Theme.colors.background_sand,
+    color: Theme.colors.text_charcoal,
     padding: 6,
     marginRight: 6,
   },

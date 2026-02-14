@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Modal,
   View,
@@ -6,17 +6,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-} from 'react-native';
-import { Theme } from '@/theme';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Theme } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 interface AlertProps {
   visible: boolean;
   title: string;
   message: string;
-  type?: 'success' | 'error' | 'warning' | 'info';
+  type?: "success" | "error" | "warning" | "info";
   showCancel?: boolean;
   confirmText?: string;
   cancelText?: string;
@@ -29,24 +29,24 @@ export const CustomAlert: React.FC<AlertProps> = ({
   visible,
   title,
   message,
-  type = 'info',
+  type = "info",
   showCancel = false,
-  confirmText = 'OK',
-  cancelText = 'Cancel',
+  confirmText = "OK",
+  cancelText = "Cancel",
   onConfirm,
   onCancel,
   onClose,
 }) => {
   const getIconConfig = () => {
     switch (type) {
-      case 'success':
-        return { name: 'checkmark-circle', color: Theme.colors.success };
-      case 'error':
-        return { name: 'close-circle', color: Theme.colors.error };
-      case 'warning':
-        return { name: 'warning', color: Theme.colors.warning };
+      case "success":
+        return { name: "checkmark-circle", color: Theme.colors.success };
+      case "error":
+        return { name: "close-circle", color: Theme.colors.error };
+      case "warning":
+        return { name: "warning", color: Theme.colors.warning };
       default:
-        return { name: 'information-circle', color: Theme.colors.info };
+        return { name: "information-circle", color: Theme.colors.info };
     }
   };
 
@@ -79,9 +79,9 @@ export const CustomAlert: React.FC<AlertProps> = ({
             />
             <Text style={styles.title}>{title}</Text>
           </View>
-          
+
           <Text style={styles.message}>{message}</Text>
-          
+
           <View style={styles.buttonContainer}>
             {showCancel && (
               <TouchableOpacity
@@ -107,17 +107,17 @@ export const CustomAlert: React.FC<AlertProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(44, 42, 40, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   alertContainer: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 16,
     padding: 24,
     width: width * 0.85,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -127,26 +127,26 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: Theme.colors.text_Secondary,
+    fontWeight: "bold",
+    color: Theme.colors.text_brown_gray,
     marginLeft: 12,
     flex: 1,
   },
   message: {
     fontSize: 16,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     lineHeight: 22,
     marginBottom: 24,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     gap: 12,
   },
   button: {
@@ -154,22 +154,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     minWidth: 80,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
     borderWidth: 1,
     borderColor: Theme.colors.border,
   },
   confirmButton: {
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
   },
   cancelButtonText: {
-    color: Theme.colors.text_Secondary,
-    fontWeight: '600',
+    color: Theme.colors.text_brown_gray,
+    fontWeight: "600",
   },
   confirmButtonText: {
-    color: Theme.colors.background_alien,
-    fontWeight: 'bold',
+    color: Theme.colors.background_cream,
+    fontWeight: "bold",
   },
 });

@@ -11,14 +11,13 @@ import React, { useState } from "react";
 import { hide } from "expo-router/build/utils/splash";
 import AddGoal from "@/components/AddGoal";
 import NewGoal from "@/components/ui/NewGoal";
-
+import { Theme } from "@/theme";
 
 const testing = () => {
-
   type Goal = {
-  text: string;
-  key: string;
-};
+    text: string;
+    key: string;
+  };
   const [enteredGoalText, setEnteredGoalText] = useState("");
   const [courseGoals, setCourseGoals] = useState<Goal[]>([]);
 
@@ -26,10 +25,10 @@ const testing = () => {
     setEnteredGoalText(enteredText);
   }
 
-  function addGoalHandler(enteredGoalText:string) {
+  function addGoalHandler(enteredGoalText: string) {
     setCourseGoals((currentCourseGoals) => [
       ...currentCourseGoals,
-      {text: enteredGoalText, key:Math.random().toString()},
+      { text: enteredGoalText, key: Math.random().toString() },
     ]);
   }
 
@@ -37,13 +36,12 @@ const testing = () => {
     <View style={styles.container}>
       {/* goal input section */}
       <View style={styles.inputContainer}>
-
         <TextInput
           style={styles.Textinput}
           placeholder="Enter your goal"
           onChangeText={goalInputHandler}
         />
-        <Button title="press me"  />
+        <Button title="press me" />
       </View>
 
       {/* goal display  */}
@@ -52,13 +50,12 @@ const testing = () => {
         <FlatList
           data={courseGoals}
           renderItem={(itemData) => {
-            return <AddGoal text={itemData.item.text} />
-      
+            return <AddGoal text={itemData.item.text} />;
           }}
         ></FlatList>
       </View>
       <View style={styles.newgoalcontainer}>
-         {/* ADD ANOTHER NEW GOAL  */}
+        {/* ADD ANOTHER NEW GOAL  */}
         <NewGoal onAddGoal={addGoalHandler} />
       </View>
     </View>
@@ -72,6 +69,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 16,
     flex: 1,
+    backgroundColor: Theme.colors.background_cream,
   },
   inputContainer: {
     flexDirection: "row",
@@ -81,11 +79,12 @@ const styles = StyleSheet.create({
   },
   Textinput: {
     borderWidth: 2,
-    borderColor: "#ccc",
+    borderColor: Theme.colors.background_sand,
     width: "70%",
     marginRight: 8,
     padding: 8,
-    backgroundColor: "black",
+    backgroundColor: Theme.colors.background_cream,
+    color: Theme.colors.text_charcoal,
   },
   goalContainer: {
     flex: 5,
@@ -93,14 +92,14 @@ const styles = StyleSheet.create({
   goalList: {
     margin: 8,
     padding: 8,
-    backgroundColor: "#6daaffff",
+    backgroundColor: Theme.colors.background_sand,
     borderRadius: 5,
   },
   goalListText: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontWeight: "bold",
   },
-  newgoalcontainer:{
-    flex:5
-  }
+  newgoalcontainer: {
+    flex: 5,
+  },
 });

@@ -16,7 +16,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { GAME_CONSTANTS, GAME_TEXTS } from "@/constants/game";
 import { GameHomeState, Coin } from "@/types/game";
 import { TokenStorage } from "@/utils/tokenStorage";
-import { useAlert } from '@/contexts/AlertContext';
+import { useAlert } from "@/contexts/AlertContext";
 
 interface CoinTapResponse {
   success: boolean;
@@ -37,11 +37,13 @@ const GameHome: React.FC = () => {
   const { width } = useWindowDimensions();
   const { showAlert } = useAlert();
   const [isLoading, setIsLoading] = useState(true); // ✅ ADD LOADING STATE
-  const [state, setState] = useState<GameHomeState & {
-    userProfile: UserProfile | null;
-    nextAvailableTime: string | null;
-    countdown: string;
-  }>({
+  const [state, setState] = useState<
+    GameHomeState & {
+      userProfile: UserProfile | null;
+      nextAvailableTime: string | null;
+      countdown: string;
+    }
+  >({
     coins: Array.from({ length: GAME_CONSTANTS.NUM_COINS }, (_, index) => ({
       id: `coin-${index}`,
       index,
@@ -62,7 +64,7 @@ const GameHome: React.FC = () => {
     (width -
       GAME_CONSTANTS.HORIZONTAL_PADDING -
       GAME_CONSTANTS.COIN_SPACING * (GAME_CONSTANTS.NUM_COINS - 1)) /
-      GAME_CONSTANTS.NUM_COINS
+      GAME_CONSTANTS.NUM_COINS,
   );
 
   // Fetch user data on component mount
@@ -74,10 +76,7 @@ const GameHome: React.FC = () => {
   const initializeGameData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([
-        fetchUserData(),
-        checkTapAvailability()
-      ]);
+      await Promise.all([fetchUserData(), checkTapAvailability()]);
     } catch (error) {
       console.error("Error initializing game data:", error);
     } finally {
@@ -93,7 +92,7 @@ const GameHome: React.FC = () => {
       interval = setInterval(() => {
         updateCountdown();
       }, 1000) as unknown as number;
-      
+
       // Initial update
       updateCountdown();
     }
@@ -120,13 +119,16 @@ const GameHome: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (pointsResponse.ok) {
         const pointsData = await pointsResponse.json();
         if (pointsData.success) {
-          setState((prev) => ({ ...prev, userPoints: pointsData.totalPoints || 0 }));
+          setState((prev) => ({
+            ...prev,
+            userPoints: pointsData.totalPoints || 0,
+          }));
         }
       }
 
@@ -139,18 +141,22 @@ const GameHome: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json();
         if (profileData.success) {
-          setState((prev) => ({ 
-            ...prev, 
+          setState((prev) => ({
+            ...prev,
             userProfile: {
-              fullName: profileData.data?.user?.name || profileData.user?.name || "Player",
-              email: profileData.data?.user?.email || profileData.user?.email || ""
-            }
+              fullName:
+                profileData.data?.user?.name ||
+                profileData.user?.name ||
+                "Player",
+              email:
+                profileData.data?.user?.email || profileData.user?.email || "",
+            },
           }));
         }
       }
@@ -172,15 +178,15 @@ const GameHome: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        setState((prev) => ({ 
-          ...prev, 
+        setState((prev) => ({
+          ...prev,
           canTap: data.canTap,
-          nextAvailableTime: data.nextAvailableTime || null
+          nextAvailableTime: data.nextAvailableTime || null,
         }));
       }
     } catch (error) {
@@ -196,32 +202,34 @@ const GameHome: React.FC = () => {
     const timeLeft = nextTime - now;
 
     if (timeLeft <= 0) {
-      setState(prev => ({ 
-        ...prev, 
-        canTap: true, 
+      setState((prev) => ({
+        ...prev,
+        canTap: true,
         countdown: "",
-        nextAvailableTime: null 
+        nextAvailableTime: null,
       }));
       return;
     }
 
-    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const hours = Math.floor(
+      (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
-    const countdownString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    setState(prev => ({ ...prev, countdown: countdownString }));
+    const countdownString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    setState((prev) => ({ ...prev, countdown: countdownString }));
   };
 
   const formatNextAvailableTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -236,21 +244,21 @@ const GameHome: React.FC = () => {
         onConfirm: () => {
           // Optional: Redirect to login
           // router.replace("/(auth)/login");
-        }
+        },
       });
       return;
     }
 
     // Check if user can tap
     if (!state.canTap) {
-      const message = state.nextAvailableTime 
+      const message = state.nextAvailableTime
         ? `You can tap again on:\n${formatNextAvailableTime(state.nextAvailableTime)}\n\nTime remaining: ${state.countdown}`
         : "You can only tap one coin every 24 hours. Please come back tomorrow for another chance to earn points!";
-      
+
       showAlert({
         title: "Cooldown Active",
         message: message,
-        type: "info"
+        type: "info",
       });
       return;
     }
@@ -273,7 +281,7 @@ const GameHome: React.FC = () => {
           body: JSON.stringify({
             coinIndex: index,
           }),
-        }
+        },
       );
 
       const data: CoinTapResponse = await response.json();
@@ -293,13 +301,15 @@ const GameHome: React.FC = () => {
         }
 
         // Calculate next available time (24 hours from now)
-        const nextAvailable = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        
+        const nextAvailable = new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ).toISOString();
+
         // Update tap availability
-        setState(prev => ({ 
-          ...prev, 
+        setState((prev) => ({
+          ...prev,
           canTap: false,
-          nextAvailableTime: data.nextAvailableTime || nextAvailable
+          nextAvailableTime: data.nextAvailableTime || nextAvailable,
         }));
 
         showAlert({
@@ -332,7 +342,8 @@ const GameHome: React.FC = () => {
       console.error("Error tapping coin:", error);
       showAlert({
         title: "Network Error",
-        message: "Failed to process your tap. Please check your internet connection and try again.",
+        message:
+          "Failed to process your tap. Please check your internet connection and try again.",
         type: "error",
         onConfirm: () => {
           setState((prev) => ({
@@ -350,13 +361,15 @@ const GameHome: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator 
-            size="large" 
-            color={Theme.colors.gold} 
+          <ActivityIndicator
+            size="large"
+            color={Theme.colors.accent_terracotta}
             style={styles.loadingSpinner}
           />
           <Text style={styles.loadingText}>Loading Game...</Text>
-          <Text style={styles.loadingSubtext}>Preparing your coins and points</Text>
+          <Text style={styles.loadingSubtext}>
+            Preparing your coins and points
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -377,7 +390,9 @@ const GameHome: React.FC = () => {
             <View style={styles.userWelcomeContainer}>
               <Text style={styles.welcomeText}>
                 Welcome back,{" "}
-                <Text style={styles.userName}>{state.userProfile.fullName}</Text>
+                <Text style={styles.userName}>
+                  {state.userProfile.fullName}
+                </Text>
                 ! 👋
               </Text>
             </View>
@@ -411,7 +426,9 @@ const GameHome: React.FC = () => {
           {!state.canTap && state.nextAvailableTime && (
             <View style={styles.cooldownContainer}>
               <View style={styles.cooldownHeader}>
-                <Text style={styles.cooldownTitle}>⏰ Next Tap Available In</Text>
+                <Text style={styles.cooldownTitle}>
+                  ⏰ Next Tap Available In
+                </Text>
                 <Text style={styles.countdownText}>{state.countdown}</Text>
               </View>
               <Text style={styles.cooldownSubtext}>
@@ -467,7 +484,10 @@ const GameHome: React.FC = () => {
                   />
                   {state.selectedCoin === index && state.isLoading && (
                     <View style={styles.coinOverlay}>
-                      <ActivityIndicator color="white" size="small" />
+                      <ActivityIndicator
+                        color={Theme.colors.background_cream}
+                        size="small"
+                      />
                     </View>
                   )}
                   {!state.canTap && (
@@ -499,7 +519,9 @@ const GameHome: React.FC = () => {
             <Text style={styles.ruleItem}>
               • Prizes are automatically awarded
             </Text>
-            <Text style={styles.ruleItem}>• Must be logged in to moonshoot account to play</Text>
+            <Text style={styles.ruleItem}>
+              • Must be logged in to moonshoot account to play
+            </Text>
           </View>
         </View>
       </KeyboardAwareScrollView>
@@ -512,13 +534,13 @@ export default GameHome;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   scrollContent: {
     flexGrow: 1,
   },
   mainContainer: {
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
     width: "100%",
     paddingHorizontal: 16,
     paddingBottom: 32,
@@ -528,9 +550,9 @@ const styles = StyleSheet.create({
   // ✅ ADD LOADING STYLES
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.background_deep,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Theme.colors.background_cream,
     paddingHorizontal: 40,
   },
   loadingSpinner: {
@@ -538,22 +560,22 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.5 }],
   },
   loadingText: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontFamily: Theme.fonts.bold,
     fontSize: Theme.fontSizes.xl,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   loadingSubtext: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   /* User Welcome */
   userWelcomeContainer: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 12,
     padding: 16,
     marginVertical: 10,
@@ -570,13 +592,13 @@ const styles = StyleSheet.create({
     }),
   },
   welcomeText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.md,
     textAlign: "center",
   },
   userName: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontFamily: Theme.fonts.bold,
     fontSize: Theme.fontSizes.lg,
   },
@@ -586,7 +608,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
     padding: 16,
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 12,
     ...Platform.select({
       ios: {
@@ -601,18 +623,18 @@ const styles = StyleSheet.create({
     }),
   },
   pointsLabel: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.md,
     marginBottom: 4,
   },
   pointsValue: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontFamily: Theme.fonts.bold,
     fontSize: 36,
   },
   pointsTarget: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.sm,
   },
@@ -623,18 +645,18 @@ const styles = StyleSheet.create({
   },
   progressBackground: {
     height: 8,
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_sand,
     borderRadius: 4,
     overflow: "hidden",
     marginBottom: 8,
   },
   progressFill: {
     height: "100%",
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     borderRadius: 4,
   },
   progressText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.sm,
     textAlign: "center",
@@ -642,37 +664,37 @@ const styles = StyleSheet.create({
 
   /* Cooldown Display */
   cooldownContainer: {
-    backgroundColor: 'rgba(255, 193, 7, 0.1)',
-    borderColor: Theme.colors.gold,
+    backgroundColor: "rgba(184, 92, 56, 0.12)",
+    borderColor: Theme.colors.accent_terracotta,
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cooldownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     marginBottom: 8,
   },
   cooldownTitle: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontFamily: Theme.fonts.bold,
     fontSize: Theme.fontSizes.md,
   },
   countdownText: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     fontFamily: Theme.fonts.bold,
     fontSize: Theme.fontSizes.lg,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
   },
   cooldownSubtext: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.sm,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   /* Top text */
@@ -683,7 +705,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   topText: {
-    color: "white",
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.regular,
     fontSize: 14,
     textAlign: "left",
@@ -706,7 +728,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 1000,
     overflow: "hidden",
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
   },
   coinImage: {
     width: "100%",
@@ -714,31 +736,31 @@ const styles = StyleSheet.create({
   },
   coinOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(44, 42, 40, 0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
   cooldownText: {
-    color: "white",
+    color: Theme.colors.background_cream,
     fontFamily: Theme.fonts.bold,
     fontSize: 12,
   },
 
   /* Rules Container */
   rulesContainer: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     borderRadius: 12,
     padding: 16,
     marginVertical: 10,
   },
   rulesTitle: {
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.bold,
     fontSize: Theme.fontSizes.lg,
     marginBottom: 12,
   },
   ruleItem: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.regular,
     fontSize: Theme.fontSizes.md,
     marginBottom: 6,

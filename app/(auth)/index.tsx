@@ -1,12 +1,12 @@
-import { 
-  Image, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View, 
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
   Dimensions,
   Animated,
-  Easing 
+  Easing,
 } from "react-native";
 import React, { useEffect, useRef } from "react";
 import { router } from "expo-router";
@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Theme } from "../../theme";
 import { Images } from "../../assets/images/images";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const Welcome = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -26,14 +26,14 @@ const Welcome = () => {
         toValue: 1,
         duration: 800,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic)
+        easing: Easing.out(Easing.cubic),
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 600,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic)
-      })
+        easing: Easing.out(Easing.cubic),
+      }),
     ]).start();
   }, []);
 
@@ -48,46 +48,47 @@ const Welcome = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        
         {/* Header */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.textContainer,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
           <Text style={styles.headerText}>GRYSOSTA</Text>
-          <Text style={styles.headerSubtitle}>Where every tap builds your legacy.</Text>
+          <Text style={styles.headerSubtitle}>
+            Where every tap builds your legacy.
+          </Text>
         </Animated.View>
 
         {/* Logo - Clean and Professional */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.imageMainContainer,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
-          <Image 
-            source={Images.logo} 
-            style={styles.image} 
+          <Image
+            source={Images.signuplogo}//please change this to the correct logo image
+            style={styles.image}
             resizeMode="contain"
           />
         </Animated.View>
 
         {/* Financial-focused Text Content */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.bodyTextContainer,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
           <Text style={styles.bodyText1}>Secure Your Future</Text>
@@ -97,13 +98,13 @@ const Welcome = () => {
         </Animated.View>
 
         {/* Enhanced Buttons */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.buttonContainer,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+            },
           ]}
         >
           <TouchableOpacity
@@ -111,9 +112,7 @@ const Welcome = () => {
             onPress={handleSignIn}
             activeOpacity={0.9}
           >
-            <Text style={styles.primaryButtonText}>
-              SIGN IN
-            </Text>
+            <Text style={styles.primaryButtonText}>SIGN IN</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -121,12 +120,9 @@ const Welcome = () => {
             onPress={handleSignUp}
             activeOpacity={0.9}
           >
-            <Text style={styles.secondaryButtonText}>
-              CREATE ACCOUNT
-            </Text>
+            <Text style={styles.secondaryButtonText}>CREATE ACCOUNT</Text>
           </TouchableOpacity>
         </Animated.View>
-
       </View>
     </SafeAreaView>
   );
@@ -137,11 +133,11 @@ export default Welcome;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
     paddingHorizontal: width * 0.08,
     paddingVertical: height * 0.03,
   },
@@ -153,15 +149,15 @@ const styles = StyleSheet.create({
   headerText: {
     fontFamily: Theme.fonts.bold,
     fontSize: width * 0.11,
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     letterSpacing: 0.5,
     marginBottom: 5,
-    fontWeight:'bold'
+    fontWeight: "bold",
   },
   headerSubtitle: {
     fontFamily: Theme.fonts.medium,
     fontSize: width * 0.045,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     letterSpacing: 1,
   },
   imageMainContainer: {
@@ -181,7 +177,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.03,
   },
   bodyText1: {
-    color: Theme.colors.text_primary,
+    color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.bold,
     fontSize: width * 0.065,
     marginBottom: 12,
@@ -189,13 +185,12 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   bodyText2: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontFamily: Theme.fonts.medium,
     fontSize: width * 0.038,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 25,
-    opacity: 0.9,
     paddingHorizontal: width * 0.05,
   },
   buttonContainer: {
@@ -213,26 +208,25 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   primaryButton: {
-    backgroundColor: Theme.colors.gold,
-    borderColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
+    borderColor: Theme.colors.accent_terracotta,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderColor: Theme.colors.gold,
+    backgroundColor: "transparent",
+    borderColor: Theme.colors.accent_terracotta,
   },
   primaryButtonText: {
     fontFamily: Theme.fonts.bold,
     fontSize: width * 0.048,
-    color: Theme.colors.background_deep,
+    color: Theme.colors.background_cream,
     letterSpacing: 1,
-    fontWeight:'bold'
+    fontWeight: "bold",
   },
   secondaryButtonText: {
     fontFamily: Theme.fonts.bold,
     fontSize: width * 0.042,
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
     letterSpacing: 0.5,
-    fontWeight:'bold'
+    fontWeight: "bold",
   },
-
 });

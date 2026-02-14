@@ -1,11 +1,11 @@
-import { 
-  Image, 
-  StyleSheet, 
-  Text, 
-  View, 
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
   Dimensions,
-  TouchableOpacity, 
-  Platform
+  TouchableOpacity,
+  Platform,
 } from "react-native";
 import React from "react";
 import { Theme } from "@/theme";
@@ -16,21 +16,21 @@ const { width, height } = Dimensions.get("window");
 const ImageGallery = () => {
   const handleCollectionPress = () => {
     // Navigate to collections screen
-    console.log('Open collections');
+    console.log("Open collections");
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.container}
       onPress={handleCollectionPress}
       activeOpacity={0.9}
     >
       <Text style={styles.title}>Collections</Text>
       <View style={styles.imageContainer}>
-        <Image 
-          source={Images.collection} 
-          style={styles.image} 
-          resizeMode="cover" 
+        <Image
+          source={Images.collection}
+          style={styles.image}
+          resizeMode="cover"
         />
       </View>
     </TouchableOpacity>
@@ -41,7 +41,7 @@ export default ImageGallery;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     padding: 16,
     width: "100%",
     height: height * 0.3,
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   imageContainer: {
-    backgroundColor: "white",
+    backgroundColor: Theme.colors.background_cream,
     height: "80%", // Better proportional height
     width: "100%",
     borderRadius: 12,

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
+import { useAuthStore } from "@/store/authStore";
+import { Theme } from "@/theme";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,19 +13,24 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace('/(auth)');
+      router.replace("/(auth)");
     }
   }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        backgroundColor: '#101923' 
-      }}>
-        <ActivityIndicator size="large" color="#ffd700" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: Theme.colors.background_cream,
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color={Theme.colors.accent_terracotta}
+        />
       </View>
     );
   }

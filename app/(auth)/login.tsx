@@ -6,6 +6,8 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
 import React, { useState } from "react";
 import { router } from "expo-router";
@@ -15,6 +17,10 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Ionicons } from "@expo/vector-icons";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useAlert } from "@/contexts/AlertContext";
+import { Images } from "@/assets/images/images";
+
+const { width, height } = Dimensions.get("window");
+
 // ✅ ADD DEFAULT EXPORT
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -37,13 +43,16 @@ export default function Login() {
 
     try {
       // Your backend API call
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
         },
-        body: JSON.stringify({ email, password }),
-      });
+      );
 
       const data = await response.json();
 
@@ -90,6 +99,11 @@ export default function Login() {
       >
         <View style={styles.container}>
           {/* Email Input */}
+          <Image 
+            source={Images.signuplogo}//please change this to the correct logo image
+            style={styles.image}
+            resizeMode="contain" 
+          />
           <View style={styles.TextInputContainer}>
             <Text style={styles.InputContainerText}>Email Address</Text>
             <View style={styles.inputContainer}>
@@ -105,7 +119,7 @@ export default function Login() {
                 placeholder="Enter Your Email address"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
               />
             </View>
@@ -128,7 +142,7 @@ export default function Login() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholderTextColor={Theme.colors.text_Secondary}
+                placeholderTextColor={Theme.colors.text_earth}
                 editable={!isLoading}
               />
               <TouchableOpacity
@@ -139,7 +153,7 @@ export default function Login() {
                 <Ionicons
                   name={showPassword ? "eye-off-outline" : "eye-outline"}
                   size={20}
-                  color={Theme.colors.text_Secondary}
+                  color={Theme.colors.text_brown_gray}
                 />
               </TouchableOpacity>
             </View>
@@ -163,7 +177,7 @@ export default function Login() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={Theme.colors.background_cream} />
               ) : (
                 <Text style={styles.ButtonText}>Login</Text>
               )}
@@ -189,13 +203,17 @@ export default function Login() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
+  },
+  image: {
+    width: width * 0.4,
+    height: width * 0.4,
   },
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Theme.colors.background_deep,
+    backgroundColor: Theme.colors.background_cream,
   },
   buttonContainer: {
     justifyContent: "center",
@@ -207,7 +225,7 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     height: 50,
-    backgroundColor: Theme.colors.gold,
+    backgroundColor: Theme.colors.accent_terracotta,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 4,
@@ -218,13 +236,13 @@ const styles = StyleSheet.create({
   },
   ButtonText: {
     fontSize: 18,
-    color: Theme.colors.background_alien,
+    color: Theme.colors.background_cream,
     fontWeight: "bold",
   },
   TextInput: {
     width: "100%",
     height: 50,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_charcoal,
     flex: 1,
   },
   TextInputContainer: {
@@ -232,7 +250,7 @@ const styles = StyleSheet.create({
     margin: 20,
   },
   inputContainer: {
-    backgroundColor: Theme.colors.background_alien,
+    backgroundColor: Theme.colors.background_beige,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -241,16 +259,16 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 10,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
   },
   InputContainerText: {
     paddingBottom: 5,
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
     fontSize: 14,
     marginLeft: 5,
   },
   ForgotpswdText: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
   },
   forgotPasswordContainer: {
     flexDirection: "row",
@@ -263,10 +281,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   createAccountText: {
-    color: Theme.colors.gold,
+    color: Theme.colors.accent_terracotta,
   },
   signUpContainerText: {
-    color: Theme.colors.text_Secondary,
+    color: Theme.colors.text_brown_gray,
   },
   eyeIcon: {
     padding: 8,

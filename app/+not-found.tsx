@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
+import { Theme } from "@/theme";
 
 export default function NotFoundScreen() {
   return (
@@ -13,11 +14,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Theme.colors.background_cream,
   },
   text: {
     fontSize: 18,
     fontWeight: "600",
-    color: "red",
+    color: Theme.colors.accent_terracotta,
   },
 });
