@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -85,8 +86,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
-
-      {/* Header */}
+      Header
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={styles.logoContainer}>
@@ -106,6 +106,22 @@ const HomeScreen: React.FC = () => {
             />
           </TouchableOpacity>
         </View>
+      </View>
+      {/* Main Content */}
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Banner section */}
+        <View style={styles.bannerContainer}>
+          <Image
+            source={Images.mainBanner}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
+        </View>
+        {/* Hero Section */}
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Today</Text>
           <Text style={styles.heroTitle}>Earn points and unlock rewards</Text>
@@ -118,20 +134,13 @@ const HomeScreen: React.FC = () => {
             />
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Main Content */}
-      <ScrollView
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
         {/* Quick Actions */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        <View style={styles.actionSection}>
+          <View style={styles.actionSectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
-              <Text style={styles.sectionSubtitle}>
+              <Text style={styles.actionSectionTitle}>Quick Actions</Text>
+              <Text style={styles.actionSectionSubtitle}>
                 Jump back in with one tap
               </Text>
             </View>
@@ -159,54 +168,31 @@ const HomeScreen: React.FC = () => {
             ))}
           </View>
         </View>
-
-        {/* Featured Game Section */}
-        {/*         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        <View style={styles.actionSection}>
+          <View style={styles.actionSectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Featured Game</Text>
-              <Text style={styles.sectionSubtitle}>
-                Earn rewards while having fun
+              <Text style={styles.actionSectionTitle}>Offers</Text>
+              <Text style={styles.actionSectionSubtitle}>
+                Exclusive deals just for you
               </Text>
             </View>
-            <TouchableOpacity>
-              <Text style={styles.sectionAction}>View All</Text>
+          </View>
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push("/(offers)/offersHome")}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons
+                  name="pricetag-sharp"
+                  size={18}
+                  color={Colors.accent_terracotta}
+                />
+              </View>
+              <Text style={styles.actionLabel}>View Offers</Text>
             </TouchableOpacity>
           </View>
-          {/* <GameCard /> */}
-
-        {/* Market News Section 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Market Insights</Text>
-              <Text style={styles.sectionSubtitle}>
-                Latest financial updates
-              </Text>
-            </View>
-            <TouchableOpacity>
-              <Text style={styles.sectionAction}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.newsCard}>
-            <NewsItem
-              title="Global markets show positive trend as inflation concerns ease"
-              time="2 min ago"
-              trend="up"
-            />
-            <NewsItem
-              title="Tech stocks face volatility amid new regulations"
-              time="15 min ago"
-              trend="down"
-            />
-            <NewsItem
-              title="New investment opportunities emerging in sustainable energy"
-              time="1 hour ago"
-              trend="up"
-            />
-          </View>
-        </View>*/}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -290,6 +276,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.background_sand,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 20,
   },
   heroLabel: {
     color: Colors.text_earth,
@@ -324,22 +316,40 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  section: {
-    marginBottom: 30,
+  bannerContainer: {
+    width: "100%",
+    height: Math.round(Dimensions.get("window").width * 0.42),
+    maxHeight: 220,
+    borderRadius: 14,
+    backgroundColor: Colors.background_beige,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+    overflow: "hidden",
   },
-  sectionHeader: {
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  actionSection: {
+    // marginBottom: 30,
+    marginTop: 20,
+  },
+  actionSectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionTitle: {
+  actionSectionTitle: {
     color: Colors.text_charcoal,
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 4,
   },
-  sectionSubtitle: {
+  actionSectionSubtitle: {
     color: Colors.text_brown_gray,
     fontSize: 14,
     fontWeight: "500",
@@ -383,6 +393,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.background_sand,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   newsItem: {
     flexDirection: "row",
@@ -398,6 +413,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 12,
     marginTop: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   newsContent: {
     flex: 1,

@@ -225,7 +225,7 @@ export default function Profile() {
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/profile`,
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/update-profile`,
         {
           method: "PUT",
           headers: {
