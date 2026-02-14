@@ -2,7 +2,7 @@ import React from "react";
 import { Stack } from "expo-router";
 import { Theme } from "@/theme";
 
-export default function GameLayout() {
+export default function OffersLayout() {
   return (
     <Stack
       screenOptions={{
@@ -15,10 +15,10 @@ export default function GameLayout() {
     >
       {/* Show header for signup */}
       <Stack.Screen
-        name="gameHome"
+        name="offersHome"
         options={{
           headerShown: true,
-          title: "Touch & Win",
+          title: "Offers",
           headerTitleAlign: "center",
         }}
       />

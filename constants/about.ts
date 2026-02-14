@@ -33,20 +33,20 @@ export const TEAM_MEMBERS: TeamMember[] = [
     id: '1',
     name: 'GRYSOSTA',
     role: 'Founder & CEO',
-    image: Images.logo
+    image: Images.ceo
   },
   {
     id: '2',
-    name: 'SAMPATH',
+    name: 'RMAS Rathnayake',
     role: ' Chief Operating Officer (COO)',
-    image: Images.logo
+    image: Images.coo
   },
-//   {
-//     id: '3',
-//     name: 'Mike Rodriguez',
-//     role: 'Game Developer',
-//     image: Images.logo
-//   }
+  {
+    id: '3',
+    name: 'Grysosta',
+    role: 'Product Manager',
+    image: Images.logo
+  }
 ];
 
 export const SOCIAL_LINKS = {

@@ -13,6 +13,7 @@ import { StatusBar } from "expo-status-bar";
 // import GameCard from "../../components/HomeComponents/GameCard";
 import { Images } from "@/assets/images/images";
 import { Colors } from "../../theme/colors";
+import { router } from "expo-router";
 
 interface NewsItemProps {
   title: string;
@@ -20,12 +21,18 @@ interface NewsItemProps {
   trend: "up" | "down";
 }
 
+interface QuickAction {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route?: string;
+}
+
 const HomeScreen: React.FC = () => {
-  const quickActions = [
-    { label: "Play Now", icon: "game-controller-outline" },
+  const quickActions: QuickAction[] = [
+    { label: "Offers", icon: "pricetag-sharp", route: "/(offers)/offersHome" },
     { label: "Rewards", icon: "trophy-outline" },
     { label: "Wallet", icon: "wallet-outline" },
-  ] as const;
+  ];
 
   const NewsItem: React.FC<NewsItemProps> = ({ title, time, trend }) => (
     <View style={styles.newsItem}>
@@ -72,7 +79,9 @@ const HomeScreen: React.FC = () => {
       </View>
     </View>
   );
-
+  const handlePress = () => {
+    router.push("/(Game)/gameHome");
+  };
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -100,7 +109,7 @@ const HomeScreen: React.FC = () => {
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Today</Text>
           <Text style={styles.heroTitle}>Earn points and unlock rewards</Text>
-          <TouchableOpacity style={styles.heroCta}>
+          <TouchableOpacity style={styles.heroCta} onPress={handlePress}>
             <Text style={styles.heroCtaText}>Claim Rewards</Text>
             <Ionicons
               name="arrow-forward"
@@ -129,7 +138,15 @@ const HomeScreen: React.FC = () => {
           </View>
           <View style={styles.actionsRow}>
             {quickActions.map((action) => (
-              <TouchableOpacity key={action.label} style={styles.actionCard}>
+              <TouchableOpacity
+                key={action.label}
+                style={styles.actionCard}
+                onPress={() => {
+                  if (action.route) {
+                    router.push(action.route);
+                  }
+                }}
+              >
                 <View style={styles.actionIcon}>
                   <Ionicons
                     name={action.icon}
@@ -144,7 +161,7 @@ const HomeScreen: React.FC = () => {
         </View>
 
         {/* Featured Game Section */}
-{/*         <View style={styles.section}>
+        {/*         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View>
               <Text style={styles.sectionTitle}>Featured Game</Text>
@@ -157,7 +174,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
           {/* <GameCard /> */}
- 
+
         {/* Market News Section 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
