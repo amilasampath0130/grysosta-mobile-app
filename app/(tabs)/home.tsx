@@ -86,7 +86,8 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
-      Header
+
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={styles.logoContainer}>
