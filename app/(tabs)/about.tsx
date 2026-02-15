@@ -70,7 +70,7 @@ const About = () => {
       <Image
         source={member.image}
         style={styles.teamImage}
-        resizeMode="cover"
+        resizeMode="contain"
       />
       <Text style={styles.teamName}>{member.name}</Text>
       <Text style={styles.teamRole}>{member.role}</Text>
@@ -98,7 +98,7 @@ const About = () => {
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>ABOUT GRYSOSTA</Text>
+          <Text style={styles.headerText}>ABOUT GRYSOSTA™</Text>
         </View>
 
         {/* Scrollable Content */}
@@ -113,9 +113,10 @@ const About = () => {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.heroTitle}>Welcome to Grysosta</Text>
+            <Text style={styles.heroTitle}>About GRYSOSTA™</Text>
             <Text style={styles.heroSubtitle}>
-              Your gateway to crypto gaming and digital asset management
+              GRYSOSTA™ is a rewards-powered digital platform connecting
+              consumers, businesses, and investors within one growing ecosystem.
             </Text>
           </View>
 
@@ -138,9 +139,11 @@ const About = () => {
                 style={styles.missionIcon}
               />
               <Text style={styles.missionText}>
-                To democratize access to cryptocurrency through engaging gaming
-                experiences and educational content. We believe everyone should
-                have the opportunity to participate in the digital economy.
+                Through our app, users discover exclusive vendor offers,
+                businesses gain measurable subscription-based exposure, and the
+                GRYSOSTA™ Coin supports long-term digital participation as the
+                platform expands. Our mission is to make commerce more engaging,
+                accessible, and connected in the modern digital economy.
               </Text>
             </View>
           </View>
@@ -368,6 +371,9 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     marginBottom: 8,
+    backgroundColor: Theme.colors.background_cream,
+    borderWidth: 1,
+    borderColor: Theme.colors.background_sand,
   },
   teamName: {
     color: Theme.colors.text_charcoal,

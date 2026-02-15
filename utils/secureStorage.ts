@@ -1,61 +1,175 @@
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from "react-native";
+
+type SecureStoreModule = typeof import("expo-secure-store");
+
+let secureStoreModule: SecureStoreModule | null = null;
+let secureStoreLoaded = false;
+
+const getSecureStore = (): SecureStoreModule | null => {
+  if (secureStoreLoaded) {
+    return secureStoreModule;
+  }
+
+  try {
+    // Lazy-load to avoid crashing when the native module is missing.
+    secureStoreModule = require("expo-secure-store");
+  } catch {
+    secureStoreModule = null;
+  }
+
+  secureStoreLoaded = true;
+
+  return secureStoreModule;
+};
+
+const memoryStore = new Map<string, string>();
+
+export const safeSetItem = async (
+  key: string,
+  value: string,
+): Promise<void> => {
+  try {
+    if (Platform.OS === "web") {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(key, value);
+      }
+      return;
+    }
+
+    const SecureStore = getSecureStore();
+    if (!SecureStore) {
+      memoryStore.set(key, value);
+      return;
+    }
+
+    const isAvailable =
+      typeof SecureStore.isAvailableAsync === "function"
+        ? await SecureStore.isAvailableAsync()
+        : false;
+
+    if (isAvailable) {
+      await SecureStore.setItemAsync(key, value);
+      return;
+    }
+
+    memoryStore.set(key, value);
+  } catch {
+    memoryStore.set(key, value);
+  }
+};
+
+export const safeGetItem = async (key: string): Promise<string | null> => {
+  try {
+    if (Platform.OS === "web") {
+      return typeof localStorage === "undefined"
+        ? null
+        : localStorage.getItem(key);
+    }
+
+    const SecureStore = getSecureStore();
+    if (!SecureStore) {
+      return memoryStore.get(key) ?? null;
+    }
+
+    const isAvailable =
+      typeof SecureStore.isAvailableAsync === "function"
+        ? await SecureStore.isAvailableAsync()
+        : false;
+
+    if (isAvailable) {
+      return await SecureStore.getItemAsync(key);
+    }
+  } catch {
+    return memoryStore.get(key) ?? null;
+  }
+
+  return memoryStore.get(key) ?? null;
+};
+
+export const safeDeleteItem = async (key: string): Promise<void> => {
+  try {
+    if (Platform.OS === "web") {
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem(key);
+      }
+      return;
+    }
+
+    const SecureStore = getSecureStore();
+    if (!SecureStore) {
+      memoryStore.delete(key);
+      return;
+    }
+
+    const isAvailable =
+      typeof SecureStore.isAvailableAsync === "function"
+        ? await SecureStore.isAvailableAsync()
+        : false;
+
+    if (isAvailable) {
+      await SecureStore.deleteItemAsync(key);
+      return;
+    }
+
+    memoryStore.delete(key);
+  } catch {
+    memoryStore.delete(key);
+  }
+};
 
 export class SecureStorage {
-  private static readonly TOKEN_KEY = 'auth_token';
-  private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
-  private static readonly USER_KEY = 'user_data';
+  private static readonly TOKEN_KEY = "auth_token";
+  private static readonly REFRESH_TOKEN_KEY = "refresh_token";
+  private static readonly USER_KEY = "user_data";
 
   static async setToken(token: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(this.TOKEN_KEY, token);
+      await safeSetItem(this.TOKEN_KEY, token);
     } catch (error) {
-      console.error('Failed to save token securely:', error);
-      throw new Error('Failed to save authentication token');
+      console.error("Failed to save token securely:", error);
     }
   }
 
   static async getToken(): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(this.TOKEN_KEY);
+      return await safeGetItem(this.TOKEN_KEY);
     } catch (error) {
-      console.error('Failed to retrieve token:', error);
+      console.error("Failed to retrieve token:", error);
       return null;
     }
   }
 
   static async setRefreshToken(token: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(this.REFRESH_TOKEN_KEY, token);
+      await safeSetItem(this.REFRESH_TOKEN_KEY, token);
     } catch (error) {
-      console.error('Failed to save refresh token securely:', error);
-      throw new Error('Failed to save refresh token');
+      console.error("Failed to save refresh token securely:", error);
     }
   }
 
   static async getRefreshToken(): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(this.REFRESH_TOKEN_KEY);
+      return await safeGetItem(this.REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error('Failed to retrieve refresh token:', error);
+      console.error("Failed to retrieve refresh token:", error);
       return null;
     }
   }
 
   static async setUser(user: any): Promise<void> {
     try {
-      await SecureStore.setItemAsync(this.USER_KEY, JSON.stringify(user));
+      await safeSetItem(this.USER_KEY, JSON.stringify(user));
     } catch (error) {
-      console.error('Failed to save user data securely:', error);
-      throw new Error('Failed to save user data');
+      console.error("Failed to save user data securely:", error);
     }
   }
 
   static async getUser<T = any>(): Promise<T | null> {
     try {
-      const user = await SecureStore.getItemAsync(this.USER_KEY);
+      const user = await safeGetItem(this.USER_KEY);
       return user ? JSON.parse(user) : null;
     } catch (error) {
-      console.error('Failed to retrieve user data:', error);
+      console.error("Failed to retrieve user data:", error);
       return null;
     }
   }
@@ -63,13 +177,12 @@ export class SecureStorage {
   static async clearAuth(): Promise<void> {
     try {
       await Promise.all([
-        SecureStore.deleteItemAsync(this.TOKEN_KEY),
-        SecureStore.deleteItemAsync(this.REFRESH_TOKEN_KEY),
-        SecureStore.deleteItemAsync(this.USER_KEY),
+        safeDeleteItem(this.TOKEN_KEY),
+        safeDeleteItem(this.REFRESH_TOKEN_KEY),
+        safeDeleteItem(this.USER_KEY),
       ]);
     } catch (error) {
-      console.error('Failed to clear auth data:', error);
-      throw new Error('Failed to clear authentication data');
+      console.error("Failed to clear auth data:", error);
     }
   }
 

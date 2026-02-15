@@ -126,29 +126,6 @@ export default function Profile() {
     fetchUserProfile();
   };
 
-  const handleLogout = () => {
-    showAlert({
-      title: "Logout",
-      message: "Are you sure you want to logout?",
-      type: "warning",
-      showCancel: true,
-      confirmText: "Logout",
-      cancelText: "Cancel",
-      onConfirm: () => {
-        // ✅ UPDATED: Clear token and redirect immediately
-        TokenStorage.clearToken();
-        setUser(null);
-
-        // Redirect immediately without showing success alert
-        router.replace("/(auth)");
-
-        // Show toast notification instead of blocking alert
-        // You can use your toast/notification system here
-        console.log("User logged out successfully");
-      },
-    });
-  };
-
   const handleEditToggle = () => {
     if (isEditing) {
       // Cancel editing - reset to original values
@@ -681,18 +658,6 @@ export default function Profile() {
             </View>
           </View>
         </View>
-
-        {/* Logout Button - Hidden when editing */}
-        {!isEditing && (
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons
-              name="log-out-outline"
-              size={24}
-              color={Theme.colors.error}
-            />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -959,21 +924,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Theme.colors.background_cream,
     fontWeight: "600",
-  },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255, 76, 76, 0.12)",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 76, 76, 0.35)",
-  },
-  logoutText: {
-    fontSize: 16,
-    color: Theme.colors.error,
-    fontWeight: "600",
-    marginLeft: 8,
   },
 });

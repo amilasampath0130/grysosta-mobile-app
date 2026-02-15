@@ -14,8 +14,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Theme } from "@/theme";
-import { Images } from "@/assets/images/images";
-
+import { router } from "expo-router";
+import { useAuth } from "@/hooks/useAuth";
+import { useAlert } from "@/contexts/AlertContext";
 type Props = {
   navigation?: any; // replace with typed navigation prop if you use TS navigation types
 };
@@ -23,6 +24,8 @@ type Props = {
 const Settings: React.FC<Props> = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const avatarSize = Math.min(72, Math.floor(width * 0.16));
+  const { logout } = useAuth();
+  const { showAlert } = useAlert();
 
   // local state — replace with context or persisted store as needed
   const [isDark, setIsDark] = useState(true);
@@ -51,16 +54,18 @@ const Settings: React.FC<Props> = ({ navigation }) => {
   };
 
   const onLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: () => {
-          /* perform logout */
-        },
+    showAlert({
+      title: "Logout",
+      message: "Are you sure you want to logout?",
+      type: "warning",
+      showCancel: true,
+      confirmText: "Logout",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        await logout();
+        router.replace("/(auth)");
       },
-    ]);
+    });
   };
 
   return (
@@ -68,34 +73,8 @@ const Settings: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.container}>
         {/* Profile */}
         <View style={styles.cardRow}>
-          <View
-            style={[
-              styles.avatarWrapper,
-              { width: avatarSize, height: avatarSize },
-            ]}
-          >
-            <Image
-              //   source={Images.profile ?? Images.logo}
-              style={[styles.avatar, { width: avatarSize, height: avatarSize }]}
-              resizeMode="cover"
-            />
-          </View>
           <View style={styles.profileInfo}>
             <Text style={styles.name}>Amila Sampath</Text>
-            <Text style={styles.subText}>Free player • Member</Text>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() =>
-                Alert.alert("Edit profile", "Open edit profile screen")
-              }
-            >
-              <Ionicons
-                name="create-outline"
-                size={16}
-                color={Theme.colors.background_cream}
-              />
-              <Text style={styles.editText}> Edit</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -264,7 +243,8 @@ const styles = StyleSheet.create({
   name: {
     color: Theme.colors.text_charcoal,
     fontFamily: Theme.fonts.bold,
-    fontSize: 16,
+    fontSize: 25,
+    fontWeight: "bold",
   },
   subText: {
     color: Theme.colors.text_earth,

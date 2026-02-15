@@ -1,8 +1,36 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SecureStorage } from '@/utils/secureStorage';
-import { apiService } from '@/services/api';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  SecureStorage,
+  safeDeleteItem,
+  safeGetItem,
+  safeSetItem,
+} from "@/utils/secureStorage";
+import { apiService } from "@/services/api";
+
+const zustandStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    try {
+      return await safeGetItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    try {
+      await safeSetItem(name, value);
+    } catch {
+      // Swallow storage errors to avoid breaking state updates.
+    }
+  },
+  removeItem: async (name: string): Promise<void> => {
+    try {
+      await safeDeleteItem(name);
+    } catch {
+      // Swallow storage errors to avoid breaking state updates.
+    }
+  },
+};
 
 export interface User {
   id: string;
@@ -32,8 +60,13 @@ interface AuthState {
   refreshAuth: () => Promise<void>; // Fixed: returns Promise<void>
   updateUser: (userData: Partial<User>) => void;
   // NEW: Email verification methods
-  sendVerificationCode: (userData: RegisterData) => Promise<{ success: boolean; email: string }>;
-  verifyAndRegister: (email: string, code: string) => Promise<{ success: boolean }>;
+  sendVerificationCode: (
+    userData: RegisterData,
+  ) => Promise<{ success: boolean; email: string }>;
+  verifyAndRegister: (
+    email: string,
+    code: string,
+  ) => Promise<{ success: boolean }>;
   resendVerificationCode: (email: string) => Promise<{ success: boolean }>;
 }
 
@@ -117,9 +150,12 @@ export const useAuthStore = create<AuthState>()(
       // ✅ Existing login method
       login: async (login: string, password: string) => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const response = await apiService.post<LoginResponse>('/auth/login', { login, password });
+          const response = await apiService.post<LoginResponse>("/auth/login", {
+            login,
+            password,
+          });
 
           if (response.success && response.data) {
             // Store tokens securely
@@ -136,13 +172,14 @@ export const useAuthStore = create<AuthState>()(
               error: null,
             });
           } else {
-            throw new Error(response.message || 'Login failed');
+            throw new Error(response.message || "Login failed");
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Login failed';
-          set({ 
-            isLoading: false, 
-            error: errorMessage 
+          const errorMessage =
+            error instanceof Error ? error.message : "Login failed";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw new Error(errorMessage);
         }
@@ -151,9 +188,12 @@ export const useAuthStore = create<AuthState>()(
       // ✅ OLD register method (keep for backward compatibility)
       register: async (userData: RegisterData) => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const response = await apiService.post<RegisterResponse>('/auth/register', userData);
+          const response = await apiService.post<RegisterResponse>(
+            "/auth/register",
+            userData,
+          );
 
           if (response.success && response.data) {
             // Store tokens securely
@@ -170,13 +210,14 @@ export const useAuthStore = create<AuthState>()(
               error: null,
             });
           } else {
-            throw new Error(response.message || 'Registration failed');
+            throw new Error(response.message || "Registration failed");
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-          set({ 
-            isLoading: false, 
-            error: errorMessage 
+          const errorMessage =
+            error instanceof Error ? error.message : "Registration failed";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw new Error(errorMessage);
         }
@@ -185,24 +226,32 @@ export const useAuthStore = create<AuthState>()(
       // ✅ NEW: Send verification code
       sendVerificationCode: async (userData: RegisterData) => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const response = await apiService.post<SendVerificationResponse>('/auth/send-verification', userData);
+          const response = await apiService.post<SendVerificationResponse>(
+            "/auth/send-verification",
+            userData,
+          );
 
           if (response.success) {
             set({ isLoading: false, error: null });
-            return { 
-              success: true, 
-              email: response.data?.email || userData.email 
+            return {
+              success: true,
+              email: response.data?.email || userData.email,
             };
           } else {
-            throw new Error(response.message || 'Failed to send verification code');
+            throw new Error(
+              response.message || "Failed to send verification code",
+            );
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to send verification code';
-          set({ 
-            isLoading: false, 
-            error: errorMessage 
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to send verification code";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw new Error(errorMessage);
         }
@@ -211,12 +260,15 @@ export const useAuthStore = create<AuthState>()(
       // ✅ NEW: Verify code and complete registration
       verifyAndRegister: async (email: string, code: string) => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const response = await apiService.post<VerifyAndRegisterResponse>('/auth/verify-and-register', { 
-            email, 
-            code 
-          });
+          const response = await apiService.post<VerifyAndRegisterResponse>(
+            "/auth/verify-and-register",
+            {
+              email,
+              code,
+            },
+          );
 
           if (response.success && response.data) {
             // Store tokens securely
@@ -232,16 +284,17 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null,
             });
-            
+
             return { success: true };
           } else {
-            throw new Error(response.message || 'Verification failed');
+            throw new Error(response.message || "Verification failed");
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Verification failed';
-          set({ 
-            isLoading: false, 
-            error: errorMessage 
+          const errorMessage =
+            error instanceof Error ? error.message : "Verification failed";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw new Error(errorMessage);
         }
@@ -250,23 +303,31 @@ export const useAuthStore = create<AuthState>()(
       // ✅ NEW: Resend verification code
       resendVerificationCode: async (email: string) => {
         set({ isLoading: true, error: null });
-        
+
         try {
-          const response = await apiService.post<ResendVerificationResponse>('/auth/resend-verification', { 
-            email 
-          });
+          const response = await apiService.post<ResendVerificationResponse>(
+            "/auth/resend-verification",
+            {
+              email,
+            },
+          );
 
           if (response.success) {
             set({ isLoading: false, error: null });
             return { success: true };
           } else {
-            throw new Error(response.message || 'Failed to resend verification code');
+            throw new Error(
+              response.message || "Failed to resend verification code",
+            );
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification code';
-          set({ 
-            isLoading: false, 
-            error: errorMessage 
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to resend verification code";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw new Error(errorMessage);
         }
@@ -275,15 +336,17 @@ export const useAuthStore = create<AuthState>()(
       // ✅ FIXED: refreshAuth method - returns Promise<void>
       refreshAuth: async (): Promise<void> => {
         try {
-          const response = await apiService.post<RefreshTokenResponse>('/auth/refresh-token');
-          
+          const response = await apiService.post<RefreshTokenResponse>(
+            "/auth/refresh-token",
+          );
+
           if (response.success && response.data) {
             const { token, refreshToken } = response.data;
-            
+
             // Store new tokens securely
             await SecureStorage.setToken(token);
             await SecureStorage.setRefreshToken(refreshToken);
-            
+
             set({
               token,
               refreshToken,
@@ -292,7 +355,7 @@ export const useAuthStore = create<AuthState>()(
             // Don't return anything - just void
             return;
           } else {
-            throw new Error(response.message || 'Token refresh failed');
+            throw new Error(response.message || "Token refresh failed");
           }
         } catch (error) {
           await get().logout();
@@ -301,30 +364,23 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        try {
-          // Call logout endpoint
-          await apiService.post('/auth/logout');
-        } catch (error) {
-          console.error('Logout API call failed:', error);
-        } finally {
-          // Always clear local storage
-          await SecureStorage.clearAuth();
-          set({
-            user: null,
-            token: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            error: null,
-            isLoading: false,
-          });
-        }
+        // No server logout endpoint for users; clear local auth state only.
+        await SecureStorage.clearAuth();
+        set({
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          error: null,
+          isLoading: false,
+        });
       },
 
       updateUser: (userData: Partial<User>) => {
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
         }));
-        
+
         // Update secure storage
         const { user } = get();
         if (user) {
@@ -335,9 +391,9 @@ export const useAuthStore = create<AuthState>()(
       clearError: () => set({ error: null }),
     }),
     {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ 
+      name: "auth-storage",
+      storage: createJSONStorage(() => zustandStorage),
+      partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
@@ -360,6 +416,6 @@ export const useAuthStore = create<AuthState>()(
           }
         };
       },
-    }
-  )
+    },
+  ),
 );
