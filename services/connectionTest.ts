@@ -1,11 +1,13 @@
 import { apiService } from './apiService';
 
+const BACKEND_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
+
 export const testBackendConnection = async (): Promise<boolean> => {
   try {
     console.log('Testing backend connection...');
     
     // First, try a simple fetch to see if server is reachable
-    const response = await fetch('http://192.168.8.101:3000', {
+    const response = await fetch(BACKEND_BASE_URL, {
       method: 'GET',
     });
     

@@ -1,16 +1,9 @@
 import React, { useMemo, useState } from "react";
-import {
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Theme } from "@/theme";
-import { MVP_REWARDS, MVP_VENDORS } from "@/constants/gameMvp";
+import { MVP_REWARDS } from "@/constants/gameMvp";
 import { RewardItem, useGameplayStore } from "@/store/gameplayStore";
 
 const COINS = [1, 2, 3, 4, 5];
@@ -33,16 +26,7 @@ const createReward = (): RewardItem => {
   };
 };
 
-const getVendorLogo = (vendorName?: string) => {
-  if (!vendorName) {
-    return null;
-  }
-
-  const vendor = MVP_VENDORS.find((item) => item.name === vendorName);
-  return vendor?.imageUrl || null;
-};
-
-export default function GameHome() {
+export default function CoinSelectionScreen() {
   const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
   const [revealedReward, setRevealedReward] = useState<RewardItem | null>(null);
   const [showPostWin, setShowPostWin] = useState(false);
@@ -56,7 +40,7 @@ export default function GameHome() {
 
   const instructionText = useMemo(() => {
     if (hasPlayed) {
-      return "Reward revealed. Choose an action below.";
+      return "Reward revealed. Choose an option below.";
     }
 
     return "Select 1 Coin to Reveal Your Reward";
@@ -83,9 +67,8 @@ export default function GameHome() {
     setShowPostWin(true);
   };
 
-  const handleViewOffers = () => {
-    setRevealedReward(null);
-    router.replace("/(offers)/offersHome");
+  const handleViewDetails = () => {
+    router.replace("/(tabs)/profile");
   };
 
   const closePostWinToHome = () => {
@@ -121,16 +104,9 @@ export default function GameHome() {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>🎉 Congratulations!</Text>
             <Text style={styles.modalSubtitle}>You won:</Text>
-            <View style={styles.rewardBadgeRow}>
-              {getVendorLogo(revealedReward?.vendor) ? (
-                <Image
-                  source={{ uri: getVendorLogo(revealedReward?.vendor) || "" }}
-                  style={styles.logoImage}
-                />
-              ) : null}
-              <Text style={styles.rewardVendor}>{revealedReward?.vendor}</Text>
-            </View>
-            <Text style={styles.rewardText}>{revealedReward?.title}</Text>
+            <Text style={styles.rewardText}>
+              {revealedReward?.title} - {revealedReward?.vendor}
+            </Text>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -143,9 +119,9 @@ export default function GameHome() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.primaryButton}
-                onPress={handleViewOffers}
+                onPress={handleViewDetails}
               >
-                <Text style={styles.primaryButtonText}>View Offers</Text>
+                <Text style={styles.primaryButtonText}>View Details</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -167,7 +143,7 @@ export default function GameHome() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.primaryButton}
-                onPress={handleViewOffers}
+                onPress={closePostWinToHome}
               >
                 <Text style={styles.primaryButtonText}>
                   Buy GRYSOSTA™ Coins
@@ -258,22 +234,6 @@ const styles = StyleSheet.create({
     color: Theme.colors.accent_terracotta,
     fontSize: 16,
     fontWeight: "700",
-  },
-  rewardBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  logoImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Theme.colors.background_sand,
-  },
-  rewardVendor: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 14,
-    fontWeight: "600",
   },
   modalButtons: {
     gap: 10,

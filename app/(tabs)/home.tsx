@@ -81,7 +81,7 @@ const HomeScreen: React.FC = () => {
     </View>
   );
   const handlePress = () => {
-    router.push("/(Game)/gameHome");
+    router.push("/(Game)/core");
   };
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>

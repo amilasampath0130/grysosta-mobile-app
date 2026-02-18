@@ -85,7 +85,7 @@ interface LoginResponse {
   data: {
     user: User;
     token: string;
-    refreshToken: string;
+    refreshToken?: string;
   };
 }
 
@@ -153,20 +153,24 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await apiService.post<LoginResponse>("/auth/login", {
-            login,
+            email: login,
             password,
           });
 
           if (response.success && response.data) {
             // Store tokens securely
             await SecureStorage.setToken(response.data.token);
-            await SecureStorage.setRefreshToken(response.data.refreshToken);
+            if (response.data.refreshToken) {
+              await SecureStorage.setRefreshToken(response.data.refreshToken);
+            } else {
+              await safeDeleteItem("refresh_token");
+            }
             await SecureStorage.setUser(response.data.user);
 
             set({
               user: response.data.user,
               token: response.data.token,
-              refreshToken: response.data.refreshToken,
+              refreshToken: response.data.refreshToken || null,
               isAuthenticated: true,
               isLoading: false,
               error: null,
@@ -176,7 +180,14 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "Login failed";
+            error instanceof Error
+              ? error.message
+              : typeof error === "object" &&
+                  error !== null &&
+                  "message" in error &&
+                  typeof (error as { message?: unknown }).message === "string"
+                ? (error as { message: string }).message
+                : "Login failed";
           set({
             isLoading: false,
             error: errorMessage,

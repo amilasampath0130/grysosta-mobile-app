@@ -13,7 +13,30 @@ export default function GameLayout() {
         headerTintColor: Theme.colors.text_charcoal,
       }}
     >
-      {/* Show header for signup */}
+      <Stack.Screen
+        name="core"
+        options={{
+          headerShown: true,
+          title: "Rewards Game",
+          headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="vendorSelection"
+        options={{
+          headerShown: true,
+          title: "Vendor Selection",
+          headerTitleAlign: "center",
+        }}
+      />
+      <Stack.Screen
+        name="coinSelection"
+        options={{
+          headerShown: true,
+          title: "Coin Selection",
+          headerTitleAlign: "center",
+        }}
+      />
       <Stack.Screen
         name="gameHome"
         options={{

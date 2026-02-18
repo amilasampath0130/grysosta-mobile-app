@@ -1,8 +1,6 @@
 import { TokenStorage } from '@/utils/tokenStorage';
 
-// Update this to match your actual backend URL
-// Make sure your backend server is running on this address
-const API_URL = 'http://192.168.8.101:3000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 interface ApiResponse<T = any> {
   success: boolean;

@@ -1,4 +1,5 @@
 import { SecureStorage } from '@/utils/secureStorage';
+import { API_CONFIG } from '@/config/config';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -49,80 +50,137 @@ function isErrorWithName(error: unknown): error is { name: string } {
 
 class ApiService {
   private baseURL: string;
+  private fallbackBaseURL: string | null;
   private timeout: number;
+  private maxRetries: number;
 
   constructor() {
-    this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
-    this.timeout = 10000; // 10 seconds
+    const envBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+    const fallbackBaseUrl = `${API_CONFIG.BASE_URL.replace(/\/$/, '')}/api`;
+    const resolvedEnvBaseUrl = envBaseUrl && envBaseUrl.length > 0 ? envBaseUrl : null;
+
+    this.baseURL = (resolvedEnvBaseUrl || fallbackBaseUrl).replace(/\/$/, '');
+    this.fallbackBaseURL =
+      resolvedEnvBaseUrl && resolvedEnvBaseUrl.replace(/\/$/, '') !== fallbackBaseUrl
+        ? fallbackBaseUrl
+        : null;
+
+    const envTimeout = Number(process.env.EXPO_PUBLIC_REQUEST_TIMEOUT_MS);
+    this.timeout = Number.isFinite(envTimeout) && envTimeout > 0
+      ? envTimeout
+      : API_CONFIG.REQUEST_TIMEOUT_MS || 20000;
+
+    this.maxRetries = 1;
+  }
+
+  private async executeRequest(
+    baseURL: string,
+    endpoint: string,
+    options: RequestInit,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      return await fetch(`${baseURL}${endpoint}`, {
+        ...options,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private async request<T>(
     endpoint: string, 
     options: RequestInit = {}
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const token = await SecureStorage.getToken();
 
-    try {
-      const token = await SecureStorage.getToken();
-      
-      const config: RequestInit = {
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-          ...options.headers,
-        },
-        ...options,
-      };
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      ...options,
+    };
 
-      const response = await fetch(`${this.baseURL}${endpoint}`, config);
-      clearTimeout(timeoutId);
+    const candidateBaseUrls = [
+      this.baseURL,
+      ...(this.fallbackBaseURL ? [this.fallbackBaseURL] : []),
+    ];
 
-      // Handle non-JSON responses
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Invalid response format');
-      }
+    const attemptedUrls: string[] = [];
 
-      const data = await response.json();
+    for (const currentBaseURL of candidateBaseUrls) {
+      for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
+        try {
+          const response = await this.executeRequest(currentBaseURL, endpoint, config);
 
-      if (!response.ok) {
-        const error: ApiError = {
-          message: data.message || 'Request failed',
-          status: response.status,
-          code: data.code,
-        };
-
-        // Auto-logout on unauthorized
-        if (response.status === 401) {
-          await SecureStorage.clearAuth();
-          // You might want to trigger a global logout here
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Invalid response format');
         }
 
-        throw error;
-      }
+        const data = await response.json();
 
-      return data;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      // Properly handle the unknown error type
-      if (isErrorWithName(error) && error.name === 'AbortError') {
-        throw { message: 'Request timeout' } as ApiError;
-      }
-      
-      console.error('API request failed:', error);
-      
-      // Re-throw with proper typing
-      if (isApiError(error)) {
-        throw error;
-      } else if (isError(error)) {
-        throw { message: error.message } as ApiError;
-      } else {
-        throw { message: 'An unknown error occurred' } as ApiError;
+        if (!response.ok) {
+          const error: ApiError = {
+            message: data.message || 'Request failed',
+            status: response.status,
+            code: data.code,
+          };
+
+          if (response.status === 401) {
+            await SecureStorage.clearAuth();
+          }
+
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+          const isAbort = isErrorWithName(error) && error.name === 'AbortError';
+          const errorMessage = isApiError(error)
+            ? error.message
+            : isError(error)
+              ? error.message
+              : 'An unknown error occurred';
+          const isNetworkFailure =
+            typeof errorMessage === 'string' &&
+            (/network request failed/i.test(errorMessage) ||
+              /failed to fetch/i.test(errorMessage));
+
+          const canRetry = attempt < this.maxRetries && (isAbort || isNetworkFailure);
+
+          if (canRetry) {
+            continue;
+          }
+
+          if (isAbort || isNetworkFailure) {
+            attemptedUrls.push(`${currentBaseURL}${endpoint}`);
+            break;
+          }
+
+          console.error('API request failed:', error);
+
+          if (isApiError(error)) {
+            throw error;
+          }
+
+          if (isError(error)) {
+            throw { message: error.message } as ApiError;
+          }
+
+          throw { message: 'An unknown error occurred' } as ApiError;
+        }
       }
     }
+
+    throw {
+      message: `Cannot reach API after timeout/network retries. Tried: ${attemptedUrls.join(' , ')}. Check EXPO_PUBLIC_API_URL and ensure backend is reachable from your device.`,
+    } as ApiError;
   }
 
   async get<T>(endpoint: string): Promise<T> {

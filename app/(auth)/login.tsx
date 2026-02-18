@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   Image,
   Dimensions,
 } from "react-native";
@@ -15,9 +14,9 @@ import { Theme } from "@/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Ionicons } from "@expo/vector-icons";
-import { TokenStorage } from "@/utils/tokenStorage";
 import { useAlert } from "@/contexts/AlertContext";
 import { Images } from "@/assets/images/images";
+import { useAuth } from "@/hooks/useAuth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,8 +25,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const { showAlert } = useAlert();
+  const { login, isLoading } = useAuth();
   const handleLogin = async () => {
     if (!email || !password) {
       showAlert({
@@ -39,52 +38,26 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Your backend API call
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
+      await login(email.trim(), password);
+      showAlert({
+        title: "Success",
+        message: "Login successful!",
+        type: "success",
+        onConfirm: () => {
+          router.replace("/(tabs)/home");
         },
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        TokenStorage.setToken(data.data.token);
-        console.log("✅ Login successful! Token stored.");
-        showAlert({
-          title: "Success",
-          message: "Login successful!",
-          type: "success",
-          onConfirm: () => {
-            router.replace("/(tabs)/home");
-          },
-        });
-      } else {
-        showAlert({
-          title: "Login Failed",
-          message: data.message || "Invalid email or password",
-          type: "error",
-        });
-      }
+      });
     } catch (error) {
       showAlert({
-        title: "Network Error",
+        title: "Login Failed",
         message:
-          "Unable to connect to server. Please check your internet connection and try again.",
+          error instanceof Error
+            ? error.message
+            : "Unable to login right now. Please try again.",
         type: "error",
       });
-
       console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

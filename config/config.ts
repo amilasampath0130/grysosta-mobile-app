@@ -1,6 +1,6 @@
 // src/config/config.ts
 export const API_CONFIG = {
-  BASE_URL: "http://192.168.8.100:5000", // 👈 change to your backend IP and port
-  REQUEST_TIMEOUT_MS: 10000, // 10 seconds
+  BASE_URL: "http://10.27.147.3:5000",
+  REQUEST_TIMEOUT_MS: 20000,
   TOKEN_KEY: "user_token",
 };
