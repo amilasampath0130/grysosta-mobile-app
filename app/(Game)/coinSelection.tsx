@@ -1,10 +1,18 @@
 import React, { useMemo, useState } from "react";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Theme } from "@/theme";
 import { MVP_REWARDS } from "@/constants/gameMvp";
 import { RewardItem, useGameplayStore } from "@/store/gameplayStore";
+import { Images } from "@/assets/images/images";
 
 const COINS = [1, 2, 3, 4, 5];
 
@@ -92,8 +100,7 @@ export default function CoinSelectionScreen() {
               ]}
               onPress={() => onSelectCoin(coin)}
             >
-              <Text style={styles.coinText}>GRYSOSTA™</Text>
-              <Text style={styles.coinNumber}>Coin {coin}</Text>
+              <Image source={Images.logo} style={styles.coinLogo} />
             </TouchableOpacity>
           ))}
         </View>
@@ -180,33 +187,25 @@ const styles = StyleSheet.create({
   },
   coinRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
   },
   coinButton: {
-    width: "48%",
-    minHeight: 110,
-    backgroundColor: Theme.colors.background_beige,
-    borderColor: Theme.colors.border,
-    borderWidth: 1,
-    borderRadius: 12,
+    width: 62,
+    height: 62,
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
+    borderRadius: 999,
   },
   coinSelected: {
-    borderColor: Theme.colors.accent_terracotta,
-    backgroundColor: Theme.colors.accent_olive,
+    transform: [{ scale: 1.06 }],
+    opacity: 0.92,
   },
-  coinText: {
-    color: Theme.colors.accent_terracotta,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  coinNumber: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 16,
-    fontWeight: "700",
+  coinLogo: {
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
   },
   modalOverlay: {
     flex: 1,
