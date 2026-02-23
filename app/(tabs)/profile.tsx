@@ -16,6 +16,7 @@ import { useAlert } from "@/contexts/AlertContext";
 import { MVP_VENDORS } from "@/constants/gameMvp";
 import { useGameplayStore } from "@/store/gameplayStore";
 import { useAuthStore } from "@/store/authStore";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
 interface UserProfile {
   _id?: string;
@@ -101,7 +102,7 @@ export default function ProfileScreen() {
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/profile`,
+        `${getApiBaseUrl()}/auth/profile`,
         {
           method: "GET",
           headers: {
@@ -178,7 +179,7 @@ export default function ProfileScreen() {
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/update-profile`,
+        `${getApiBaseUrl()}/auth/update-profile`,
         {
           method: "PUT",
           headers: {

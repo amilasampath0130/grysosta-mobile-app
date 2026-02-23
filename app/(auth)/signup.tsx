@@ -19,6 +19,7 @@ import { TokenStorage } from "@/utils/tokenStorage";
 import { useAlert } from "@/contexts/AlertContext";
 import PhoneInputWithCountry from "@/components/PhoneInputWithCountry";
 import { Country, CountryCode } from "react-native-country-picker-modal";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 export default function SignUp() {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
@@ -84,7 +85,7 @@ export default function SignUp() {
       console.log("User data:", userData);
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/register`,
+        `${getApiBaseUrl()}/auth/register`,
         {
           method: "POST",
           headers: {

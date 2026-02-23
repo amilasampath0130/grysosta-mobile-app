@@ -1,6 +1,12 @@
-// src/config/config.ts
+const DEFAULT_BACKEND_ORIGIN = "http://localhost:5000";
+
+const envApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+const derivedOrigin = envApiUrl
+  ? envApiUrl.replace(/\/api\/?$/i, "")
+  : DEFAULT_BACKEND_ORIGIN;
+
 export const API_CONFIG = {
-  BASE_URL: "http://10.27.147.3:5000",
+  BASE_URL: derivedOrigin,
   REQUEST_TIMEOUT_MS: 20000,
   TOKEN_KEY: "user_token",
 };

@@ -13,6 +13,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Theme } from "@/theme";
 import { useAlert } from "@/contexts/AlertContext";
 import { TokenStorage } from "@/utils/tokenStorage";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
 const VerifyOtp = () => {
   const { email } = useLocalSearchParams<{ email?: string }>();
@@ -58,7 +59,7 @@ const VerifyOtp = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/verify-otp`,
+        `${getApiBaseUrl()}/auth/verify-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -100,7 +101,7 @@ const VerifyOtp = () => {
     setIsResending(true);
     try {
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/resend-otp`,
+        `${getApiBaseUrl()}/auth/resend-otp`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
