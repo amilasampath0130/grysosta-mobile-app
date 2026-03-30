@@ -13,10 +13,10 @@ import { router } from "expo-router";
 import { Theme } from "@/theme";
 import { SecureStorage } from "@/utils/secureStorage";
 import { useAlert } from "@/contexts/AlertContext";
-import { MVP_VENDORS } from "@/constants/gameMvp";
 import { useGameplayStore } from "@/store/gameplayStore";
 import { useAuthStore } from "@/store/authStore";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { vendorService, type VendorListItem } from "@/services/vendorService";
 
 interface UserProfile {
   _id?: string;
@@ -63,6 +63,7 @@ export default function ProfileScreen() {
   const redeemReward = useGameplayStore((state) => state.redeemReward);
 
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -72,14 +73,49 @@ export default function ProfileScreen() {
     mobileNumber: "",
   });
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVendors = async () => {
+      try {
+        const approved = await vendorService.getApprovedVendors();
+        if (cancelled) return;
+        setVendors(approved);
+      } catch {
+        if (cancelled) return;
+        setVendors([]);
+      }
+    };
+
+    loadVendors();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const vendorById = useMemo(() => {
+    const map = new Map<string, VendorListItem>();
+    for (const vendor of vendors) {
+      map.set(vendor.id, vendor);
+    }
+    return map;
+  }, [vendors]);
+
   const selectedVendors = useMemo(
-    () => MVP_VENDORS.filter((vendor) => selectedVendorIds.includes(vendor.id)),
-    [selectedVendorIds],
+    () =>
+      selectedVendorIds.map((vendorId) =>
+        vendorById.get(vendorId) || { id: vendorId, name: "Unknown vendor" },
+      ),
+    [selectedVendorIds, vendorById],
   );
 
   const favoriteVendors = useMemo(
-    () => MVP_VENDORS.filter((vendor) => favoriteVendorIds.includes(vendor.id)),
-    [favoriteVendorIds],
+    () =>
+      favoriteVendorIds.map((vendorId) =>
+        vendorById.get(vendorId) || { id: vendorId, name: "Unknown vendor" },
+      ),
+    [favoriteVendorIds, vendorById],
   );
 
   const getToken = async () => {

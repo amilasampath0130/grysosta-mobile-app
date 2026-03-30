@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -11,11 +12,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
-import { MVP_VENDORS } from "@/constants/gameMvp";
 import { useGameplayStore } from "@/store/gameplayStore";
+import { vendorService, type VendorListItem } from "@/services/vendorService";
 
 export default function VendorSelectionScreen() {
   const [selected, setSelected] = useState<string[]>([]);
+  const [vendors, setVendors] = useState<VendorListItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const favoriteVendorIds = useGameplayStore(
     (state) => state.favoriteVendorIds,
   );
@@ -25,6 +29,34 @@ export default function VendorSelectionScreen() {
   const setSelectedVendors = useGameplayStore(
     (state) => state.setSelectedVendors,
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVendors = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage(null);
+        const approved = await vendorService.getApprovedVendors();
+        if (cancelled) return;
+        setVendors(approved);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to fetch vendors";
+        setErrorMessage(message);
+        setVendors([]);
+      } finally {
+        if (cancelled) return;
+        setIsLoading(false);
+      }
+    };
+
+    loadVendors();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selectedCount = selected.length;
   const canContinue = selectedCount >= 3;
@@ -67,22 +99,35 @@ export default function VendorSelectionScreen() {
         <Text style={styles.title}>Select 3 Vendors to Play</Text>
         <Text style={styles.subtitle}>{instructionText}</Text>
 
+        {isLoading && (
+          <View style={styles.statusRow}>
+            <ActivityIndicator color={Theme.colors.accent_terracotta} />
+            <Text style={styles.statusText}>Loading vendors…</Text>
+          </View>
+        )}
+
+        {!isLoading && errorMessage && (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        )}
+
         <FlatList
-          data={MVP_VENDORS}
+          data={vendors}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={styles.vendorRow}
           contentContainerStyle={styles.vendorList}
+          ListEmptyComponent={
+            !isLoading && !errorMessage ? (
+              <Text style={styles.emptyText}>No vendors available.</Text>
+            ) : null
+          }
           renderItem={({ item }) => {
             const isSelected = selected.includes(item.id);
             const isFavorite = favoriteVendorIds.includes(item.id);
 
             return (
               <TouchableOpacity
-                style={[
-                  styles.vendorCard,
-                  isSelected && styles.vendorCardSelected,
-                ]}
+                style={[styles.vendorCard, isSelected && styles.vendorCardSelected]}
                 onPress={() => handleVendorTap(item.id)}
               >
                 <TouchableOpacity
@@ -96,16 +141,18 @@ export default function VendorSelectionScreen() {
                   />
                 </TouchableOpacity>
 
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.logoImage}
-                />
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.logoImage}
+                  />
+                ) : (
+                  <View style={styles.logoPlaceholder} />
+                )}
 
                 <Text style={styles.vendorName}>{item.name}</Text>
-                <Text style={styles.vendorCategory}>{item.category}</Text>
-                {isSelected && (
-                  <Text style={styles.selectedLabel}>Selected</Text>
-                )}
+                <Text style={styles.vendorCategory}>{item.category || ""}</Text>
+                {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
               </TouchableOpacity>
             );
           }}
@@ -147,6 +194,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 4,
+  },
+  statusText: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  errorText: {
+    color: Theme.colors.accent_terracotta,
+    fontSize: 13,
+    fontWeight: "600",
+  },
   vendorList: {
     gap: 10,
     paddingBottom: 10,
@@ -178,6 +241,13 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.background_sand,
     marginBottom: 6,
   },
+  logoPlaceholder: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Theme.colors.background_sand,
+    marginBottom: 6,
+  },
   vendorName: {
     color: Theme.colors.text_charcoal,
     fontSize: 15,
@@ -192,6 +262,12 @@ const styles = StyleSheet.create({
     color: Theme.colors.accent_terracotta,
     fontSize: 12,
     fontWeight: "700",
+  },
+  emptyText: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 13,
+    fontWeight: "600",
+    paddingTop: 8,
   },
   primaryButton: {
     backgroundColor: Theme.colors.accent_terracotta,

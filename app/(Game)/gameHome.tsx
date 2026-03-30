@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Image,
   Modal,
@@ -10,15 +10,15 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Theme } from "@/theme";
-import { MVP_REWARDS, MVP_VENDORS } from "@/constants/gameMvp";
+import { MVP_REWARDS } from "@/constants/gameMvp";
 import { RewardItem, useGameplayStore } from "@/store/gameplayStore";
 import { Images } from "@/assets/images/images";
+import { vendorService, type VendorListItem } from "@/services/vendorService";
 
 const COINS = [1, 2, 3, 4, 5];
 
-const createReward = (): RewardItem => {
-  const randomTemplate =
-    MVP_REWARDS[Math.floor(Math.random() * MVP_REWARDS.length)];
+const createReward = (vendorName: string): RewardItem => {
+  const randomTemplate = MVP_REWARDS[Math.floor(Math.random() * MVP_REWARDS.length)];
   const wonAt = new Date().toISOString();
   const expiresAt = new Date(
     Date.now() + randomTemplate.expiryDays * 24 * 60 * 60 * 1000,
@@ -27,31 +27,59 @@ const createReward = (): RewardItem => {
   return {
     id: `${randomTemplate.id}-${Date.now()}`,
     title: randomTemplate.title,
-    vendor: randomTemplate.vendor,
+    vendor: vendorName,
     wonAt,
     expiresAt,
     isRedeemed: false,
   };
 };
 
-const getVendorLogo = (vendorName?: string) => {
-  if (!vendorName) {
-    return null;
-  }
-
-  const vendor = MVP_VENDORS.find((item) => item.name === vendorName);
-  return vendor?.imageUrl || null;
-};
-
 export default function GameHome() {
   const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
   const [revealedReward, setRevealedReward] = useState<RewardItem | null>(null);
   const [showPostWin, setShowPostWin] = useState(false);
+  const [vendors, setVendors] = useState<VendorListItem[]>([]);
 
   const addRewardToHistory = useGameplayStore(
     (state) => state.addRewardToHistory,
   );
   const saveReward = useGameplayStore((state) => state.saveReward);
+  const selectedVendorIds = useGameplayStore((state) => state.selectedVendorIds);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVendors = async () => {
+      try {
+        const approved = await vendorService.getApprovedVendors();
+        if (cancelled) return;
+        setVendors(approved);
+      } catch {
+        if (cancelled) return;
+        setVendors([]);
+      }
+    };
+
+    loadVendors();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const vendorById = useMemo(() => {
+    const map = new Map<string, VendorListItem>();
+    for (const vendor of vendors) {
+      map.set(vendor.id, vendor);
+    }
+    return map;
+  }, [vendors]);
+
+  const getVendorLogo = (vendorName?: string) => {
+    if (!vendorName) return null;
+    const vendor = vendors.find((item) => item.name === vendorName);
+    return vendor?.imageUrl || null;
+  };
 
   const hasPlayed = selectedCoin !== null;
 
@@ -68,7 +96,15 @@ export default function GameHome() {
       return;
     }
 
-    const reward = createReward();
+    const selectedVendorId =
+      selectedVendorIds[Math.floor(Math.random() * Math.max(1, selectedVendorIds.length))];
+
+    const vendorName =
+      (selectedVendorId && vendorById.get(selectedVendorId)?.name) ||
+      vendors[Math.floor(Math.random() * Math.max(1, vendors.length))]?.name ||
+      "Vendor";
+
+    const reward = createReward(vendorName);
     setSelectedCoin(coinIndex);
     setRevealedReward(reward);
     addRewardToHistory(reward);

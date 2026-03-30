@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  
   Image,
   StyleSheet,
   Text,
@@ -10,9 +12,41 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
-import { MVP_VENDORS } from "@/constants/gameMvp";
+import { vendorService, type VendorListItem } from "@/services/vendorService";
 
 export default function CoreScreen() {
+  const [vendors, setVendors] = useState<VendorListItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVendors = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage(null);
+        const approved = await vendorService.getApprovedVendors();
+        if (cancelled) return;
+        setVendors(approved);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to fetch vendors";
+        setErrorMessage(message);
+        setVendors([]);
+      } finally {
+        if (cancelled) return;
+        setIsLoading(false);
+      }
+    };
+
+    loadVendors();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -25,17 +59,32 @@ export default function CoreScreen() {
 
         <Text style={styles.instruction}>Select 3 Vendors to Play</Text>
 
+        {isLoading && (
+          <View style={styles.statusRow}>
+            <ActivityIndicator color={Theme.colors.accent_terracotta} />
+            <Text style={styles.statusText}>Loading vendors…</Text>
+          </View>
+        )}
+
+        {!isLoading && errorMessage && (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        )}
+
         <FlatList
-          data={MVP_VENDORS}
+          data={vendors}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={styles.vendorRow}
           contentContainerStyle={styles.vendorList}
           renderItem={({ item }) => (
             <View style={styles.vendorCard}>
-              <Image source={{ uri: item.imageUrl }} style={styles.logoImage} />
+              {item.imageUrl ? (
+                <Image source={{ uri: item.imageUrl }} style={styles.logoImage} />
+              ) : (
+                <View style={styles.logoPlaceholder} />
+              )}
               <Text style={styles.vendorName}>{item.name}</Text>
-              <Text style={styles.vendorCategory}>{item.category}</Text>
+              <Text style={styles.vendorCategory}>{item.category || ""}</Text>
             </View>
           )}
         />
@@ -85,6 +134,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  statusText: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  errorText: {
+    color: Theme.colors.accent_terracotta,
+    fontSize: 13,
+    fontWeight: "600",
+  },
   vendorList: {
     paddingBottom: 10,
     gap: 10,
@@ -104,6 +168,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   logoImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Theme.colors.background_sand,
+    marginBottom: 6,
+  },
+  logoPlaceholder: {
     width: 30,
     height: 30,
     borderRadius: 15,
