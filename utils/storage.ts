@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '@/lib/logger';
 
 export const storage = {
   // Set item with automatic JSON stringification
@@ -7,7 +8,7 @@ export const storage = {
       const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
       await AsyncStorage.setItem(key, stringValue);
     } catch (error) {
-      console.error('Storage set error:', error);
+      logger.error('Storage set error', error);
       throw new Error(`Failed to save data for key: ${key}`);
     }
   },
@@ -24,7 +25,7 @@ export const storage = {
         return value as unknown as T;
       }
     } catch (error) {
-      console.error('Storage get error:', error);
+      logger.error('Storage get error', error);
       throw new Error(`Failed to retrieve data for key: ${key}`);
     }
   },
@@ -34,7 +35,7 @@ export const storage = {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('Storage remove error:', error);
+      logger.error('Storage remove error', error);
       throw new Error(`Failed to remove data for key: ${key}`);
     }
   },
@@ -44,7 +45,7 @@ export const storage = {
     try {
       await AsyncStorage.clear();
     } catch (error) {
-      console.error('Storage clear error:', error);
+      logger.error('Storage clear error', error);
       throw new Error('Failed to clear storage');
     }
   },
@@ -65,7 +66,7 @@ export const storage = {
         }
       });
     } catch (error) {
-      console.error('Storage multiGet error:', error);
+      logger.error('Storage multiGet error', error);
       throw new Error('Failed to retrieve multiple items');
     }
   },
@@ -80,7 +81,7 @@ export const storage = {
       ]);
       await AsyncStorage.multiSet(stringPairs);
     } catch (error) {
-      console.error('Storage multiSet error:', error);
+      logger.error('Storage multiSet error', error);
       throw new Error('Failed to set multiple items');
     }
   },
@@ -90,7 +91,7 @@ export const storage = {
     try {
       await AsyncStorage.multiRemove(keys as string[]); // AsyncStorage accepts string[]; cast is OK here
     } catch (error) {
-      console.error('Storage multiRemove error:', error);
+      logger.error('Storage multiRemove error', error);
       throw new Error('Failed to remove multiple items');
     }
   },
@@ -101,7 +102,7 @@ export const storage = {
     try {
       return await AsyncStorage.getAllKeys();
     } catch (error) {
-      console.error('Storage getAllKeys error:', error);
+      logger.error('Storage getAllKeys error', error);
       throw new Error('Failed to get storage keys');
     }
   },
@@ -112,7 +113,7 @@ export const storage = {
       const value = await AsyncStorage.getItem(key);
       return value !== null;
     } catch (error) {
-      console.error('Storage has error:', error);
+      logger.error('Storage has error', error);
       return false;
     }
   },

@@ -1,10 +1,12 @@
+import { logger } from "@/lib/logger";
+
 // Simple in-memory token storage
 let authToken: string | null = null;
 
 export const TokenStorage = {
   setToken: (token: string) => {
     authToken = token;
-    console.log('✅ Token stored successfully');
+    logger.info("Token stored in memory");
   },
   
   getToken: (): string | null => {
@@ -13,6 +15,6 @@ export const TokenStorage = {
   
   clearToken: () => {
     authToken = null;
-    console.log('✅ Token cleared');
+    logger.info("In-memory token cleared");
   }
 };

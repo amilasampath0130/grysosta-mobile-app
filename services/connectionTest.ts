@@ -1,30 +1,30 @@
-import { apiService } from './apiService';
+import { logger } from '@/lib/logger';
 
 const BACKEND_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
 
 export const testBackendConnection = async (): Promise<boolean> => {
   try {
-    console.log('Testing backend connection...');
+    logger.info('Testing backend connection');
     
     // First, try a simple fetch to see if server is reachable
     const response = await fetch(BACKEND_BASE_URL, {
       method: 'GET',
     });
     
-    console.log('Server response status:', response.status);
+    logger.info('Server response status', response.status);
     
     if (response.ok) {
-      console.log('✅ Backend server is reachable');
+      logger.info('Backend server is reachable');
       return true;
     } else {
-      console.log('❌ Backend server returned error:', response.status);
+      logger.warn('Backend server returned error', response.status);
       return false;
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.log('❌ Cannot connect to backend server:', error.message);
+      logger.error('Cannot connect to backend server', error.message);
     } else {
-      console.log('❌ Cannot connect to backend server: Unknown error');
+      logger.error('Cannot connect to backend server: Unknown error');
     }
     return false;
   }

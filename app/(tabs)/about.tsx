@@ -17,6 +17,7 @@ import {
   MaterialCommunityIcons,
   FontAwesome5,
 } from "@expo/vector-icons";
+import { logger } from "@/lib/logger";
 
 // Import constants and types
 import { ABOUT_FEATURES, TEAM_MEMBERS, SOCIAL_LINKS } from "@/constants/about";
@@ -40,9 +41,7 @@ const About = () => {
 
   // Handler functions
   const handleSocialPress = (url: string) => {
-    Linking.openURL(url).catch((err) =>
-      console.error("Failed to open URL:", err),
-    );
+    Linking.openURL(url).catch((err) => logger.error("Failed to open URL", err));
   };
 
   const handleContactPress = () => {

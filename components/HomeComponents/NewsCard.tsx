@@ -11,16 +11,17 @@ import { Theme } from "@/theme";
 import { Images } from "@/assets/images/images"; // Use centralized imports
 import SectionHeader from "./SectionHeader";
 import { NEWS_DATA } from "@/constants/home";
+import { logger } from "@/lib/logger";
 
 const NewsCard = () => {
   const handleSeeMore = () => {
     // Navigate to news list screen
-    console.log("Navigate to news list");
+    logger.info("Navigate to news list");
   };
 
   const handleNewsPress = (newsId: string) => {
     // Navigate to news detail
-    console.log("Open news:", newsId);
+    logger.info("Open news", newsId);
   };
 
   return (

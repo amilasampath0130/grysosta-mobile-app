@@ -20,6 +20,7 @@ import { useAlert } from "@/contexts/AlertContext";
 import PhoneInputWithCountry from "@/components/PhoneInputWithCountry";
 import { Country, CountryCode } from "react-native-country-picker-modal";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { logger } from "@/lib/logger";
 export default function SignUp() {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
@@ -67,8 +68,6 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      console.log("Sending signup request...");
-
       const trimmedMobile = mobileNumber.replace(/\s+/g, "").trim();
       const fullMobileNumber = trimmedMobile
         ? `+${callingCode}${trimmedMobile}`
@@ -82,8 +81,6 @@ export default function SignUp() {
         mobileNumber: fullMobileNumber,
       };
 
-      console.log("User data:", userData);
-
       const response = await fetch(
         `${getApiBaseUrl()}/auth/register`,
         {
@@ -95,14 +92,9 @@ export default function SignUp() {
         },
       );
 
-      console.log("Response status:", response.status);
-
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (response.ok && data.success) {
-        console.log("✅ Registration successful! OTP sent to email.");
-
         showAlert({
           title: "Verify Your Email",
           message:
@@ -124,7 +116,7 @@ export default function SignUp() {
         });
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      logger.error("Registration error", error);
       showAlert({
         title: "Network Error",
         message:
@@ -316,7 +308,7 @@ export default function SignUp() {
           {/* Login Link */}
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpContainerText}>
-              Already have an Account?
+              Already have an account a ?
             </Text>
             <TouchableOpacity
               onPress={() => router.push("/(auth)/login")}

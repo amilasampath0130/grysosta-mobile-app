@@ -1,4 +1,5 @@
 import { TokenStorage } from '@/utils/tokenStorage';
+import { logger } from '@/lib/logger';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -32,11 +33,7 @@ class ApiService {
         ...options,
       };
 
-      console.log(`Making API request to: ${this.baseURL}${endpoint}`);
-      
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
-      
-      console.log(`Response status: ${response.status}`);
       
       if (!response.ok) {
         // More detailed error information
@@ -56,7 +53,7 @@ class ApiService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      logger.error('API request failed', error);
       
       // More specific error handling with proper typing
       if (error instanceof Error) {

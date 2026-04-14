@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { logger } from "@/lib/logger";
 
 type SecureStoreModule = typeof import("expo-secure-store");
 
@@ -126,7 +127,7 @@ export class SecureStorage {
     try {
       await safeSetItem(this.TOKEN_KEY, token);
     } catch (error) {
-      console.error("Failed to save token securely:", error);
+      logger.error("Failed to save token securely", error);
     }
   }
 
@@ -134,7 +135,7 @@ export class SecureStorage {
     try {
       return await safeGetItem(this.TOKEN_KEY);
     } catch (error) {
-      console.error("Failed to retrieve token:", error);
+      logger.error("Failed to retrieve token", error);
       return null;
     }
   }
@@ -143,7 +144,7 @@ export class SecureStorage {
     try {
       await safeSetItem(this.REFRESH_TOKEN_KEY, token);
     } catch (error) {
-      console.error("Failed to save refresh token securely:", error);
+      logger.error("Failed to save refresh token securely", error);
     }
   }
 
@@ -151,7 +152,7 @@ export class SecureStorage {
     try {
       return await safeGetItem(this.REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error("Failed to retrieve refresh token:", error);
+      logger.error("Failed to retrieve refresh token", error);
       return null;
     }
   }
@@ -160,7 +161,7 @@ export class SecureStorage {
     try {
       await safeSetItem(this.USER_KEY, JSON.stringify(user));
     } catch (error) {
-      console.error("Failed to save user data securely:", error);
+      logger.error("Failed to save user data securely", error);
     }
   }
 
@@ -169,7 +170,7 @@ export class SecureStorage {
       const user = await safeGetItem(this.USER_KEY);
       return user ? JSON.parse(user) : null;
     } catch (error) {
-      console.error("Failed to retrieve user data:", error);
+      logger.error("Failed to retrieve user data", error);
       return null;
     }
   }
@@ -182,7 +183,7 @@ export class SecureStorage {
         safeDeleteItem(this.USER_KEY),
       ]);
     } catch (error) {
-      console.error("Failed to clear auth data:", error);
+      logger.error("Failed to clear auth data", error);
     }
   }
 

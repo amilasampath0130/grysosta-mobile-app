@@ -14,6 +14,7 @@ import { Theme } from "@/theme";
 import { useAlert } from "@/contexts/AlertContext";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { logger } from "@/lib/logger";
 
 const VerifyOtp = () => {
   const { email } = useLocalSearchParams<{ email?: string }>();
@@ -84,7 +85,7 @@ const VerifyOtp = () => {
         });
       }
     } catch (error) {
-      console.error("Verify OTP error:", error);
+      logger.error("Verify OTP error", error);
       showAlert({
         title: "Network Error",
         message:
@@ -132,7 +133,7 @@ const VerifyOtp = () => {
         });
       }
     } catch (error) {
-      console.error("Resend OTP error:", error);
+      logger.error("Resend OTP error", error);
       showAlert({
         title: "Network Error",
         message: "Unable to resend code.",

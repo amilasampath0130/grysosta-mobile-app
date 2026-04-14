@@ -10,13 +10,14 @@ import {
 import React from "react";
 import { Theme } from "@/theme";
 import { Images } from "@/assets/images/images";
+import { logger } from "@/lib/logger";
 
 const { width, height } = Dimensions.get("window");
 
 const ImageGallery = () => {
   const handleCollectionPress = () => {
     // Navigate to collections screen
-    console.log("Open collections");
+    logger.info("Open collections");
   };
 
   return (

@@ -1,5 +1,6 @@
 import { SecureStorage } from '@/utils/secureStorage';
 import { API_CONFIG } from '@/config/config';
+import { logger } from '@/lib/logger';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -163,7 +164,7 @@ class ApiService {
             break;
           }
 
-          console.error('API request failed:', error);
+          logger.error('API request failed', error);
 
           if (isApiError(error)) {
             throw error;
