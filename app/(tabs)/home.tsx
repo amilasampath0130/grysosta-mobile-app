@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
   View,
   Text,
   StyleSheet,
@@ -7,6 +10,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Modal,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +20,10 @@ import { StatusBar } from "expo-status-bar";
 import { Images } from "@/assets/images/images";
 import { Colors } from "../../theme/colors";
 import { router } from "expo-router";
+import {
+  advertisementService,
+  type PublicAdvertisementItem,
+} from "@/services/advertisementService";
 
 interface NewsItemProps {
   title: string;
@@ -28,12 +37,69 @@ interface QuickAction {
   route?: string;
 }
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const CAROUSEL_ITEM_WIDTH = SCREEN_WIDTH - 40;
+
 const HomeScreen: React.FC = () => {
+  const [ads, setAds] = useState<PublicAdvertisementItem[]>([]);
+  const [isAdsLoading, setIsAdsLoading] = useState<boolean>(true);
+  const [activeAdIndex, setActiveAdIndex] = useState<number>(0);
+  const [adsError, setAdsError] = useState<string | null>(null);
+  const [selectedAd, setSelectedAd] = useState<PublicAdvertisementItem | null>(null);
+
+  const adsListRef = useRef<FlatList<PublicAdvertisementItem>>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
+
   const quickActions: QuickAction[] = [
     { label: "Offers", icon: "pricetag-sharp", route: "/(offers)/offersHome" },
     { label: "Rewards", icon: "trophy-outline" },
     { label: "Wallet", icon: "wallet-outline" },
   ];
+
+  const loadAds = useCallback(async () => {
+    try {
+      setIsAdsLoading(true);
+      setAdsError(null);
+      const activeAdvertisements =
+        await advertisementService.getPublicActiveAdvertisements();
+      setAds(activeAdvertisements);
+      setActiveAdIndex(0);
+    } catch (error) {
+      setAds([]);
+      setAdsError(
+        error instanceof Error ? error.message : "Failed to load advertisements",
+      );
+    } finally {
+      setIsAdsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAds();
+  }, [loadAds]);
+
+  useEffect(() => {
+    if (ads.length < 2) return;
+
+    const timer = setInterval(() => {
+      setActiveAdIndex((prev) => {
+        const next = (prev + 1) % ads.length;
+        adsListRef.current?.scrollToOffset({
+          offset: next * CAROUSEL_ITEM_WIDTH,
+          animated: true,
+        });
+        return next;
+      });
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, [ads.length]);
+
+  const adSectionTitle = useMemo(() => {
+    if (isAdsLoading) return "Loading advertisements...";
+    if (adsError) return "Vendor Advertisements";
+    return "Vendor Advertisements";
+  }, [adsError, isAdsLoading]);
 
   const NewsItem: React.FC<NewsItemProps> = ({ title, time, trend }) => (
     <View style={styles.newsItem}>
@@ -83,6 +149,33 @@ const HomeScreen: React.FC = () => {
   const handlePress = () => {
     router.push("/(Game)/core");
   };
+
+  const handleAdSnap = (offsetX: number) => {
+    const nextIndex = Math.round(offsetX / CAROUSEL_ITEM_WIDTH);
+    setActiveAdIndex(nextIndex);
+  };
+
+  const renderAdvertisement = ({ item }: { item: PublicAdvertisementItem }) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.9}
+        style={styles.adCard}
+        onPress={() => setSelectedAd(item)}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.adImage} resizeMode="cover" />
+        <View style={styles.adOverlay}>
+          <Text style={styles.adVendor}>{item.vendorName}</Text>
+          <Text style={styles.adTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.adDescription} numberOfLines={2}>
+            {item.content}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -122,6 +215,74 @@ const HomeScreen: React.FC = () => {
             resizeMode="cover"
           />
         </View>
+
+        <View style={styles.adSection}>
+          <View style={styles.actionSectionHeader}>
+            <View>
+              <Text style={styles.actionSectionTitle}>{adSectionTitle}</Text>
+              <Text style={styles.actionSectionSubtitle}>
+                Uploaded by verified vendors
+              </Text>
+            </View>
+          </View>
+
+          {isAdsLoading && (
+            <View style={styles.adStatusRow}>
+              <ActivityIndicator color={Colors.accent_terracotta} />
+              <Text style={styles.adStatusText}>Fetching latest ads...</Text>
+            </View>
+          )}
+
+          {!isAdsLoading && ads.length > 0 && (
+            <>
+              <Animated.FlatList
+                ref={adsListRef}
+                data={ads}
+                keyExtractor={(item) => item.id}
+                renderItem={renderAdvertisement}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={CAROUSEL_ITEM_WIDTH}
+                decelerationRate="fast"
+                onMomentumScrollEnd={(event) => {
+                  handleAdSnap(event.nativeEvent.contentOffset.x);
+                }}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                  { useNativeDriver: false },
+                )}
+                scrollEventThrottle={16}
+              />
+
+              <View style={styles.adPagination}>
+                {ads.map((_, index) => (
+                  <View
+                    key={`ad-dot-${index}`}
+                    style={[
+                      styles.adDot,
+                      index === activeAdIndex && styles.adDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+
+          {!isAdsLoading && ads.length === 0 && (
+            <View style={styles.adEmptyState}>
+              <Text style={styles.adStatusText}>
+                {adsError || "No active advertisements right now."}
+              </Text>
+              {adsError && (
+                <TouchableOpacity style={styles.retryButton} onPress={() => void loadAds()}>
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
+
         {/* Hero Section */}
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Today</Text>
@@ -195,6 +356,50 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={Boolean(selectedAd)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedAd(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setSelectedAd(null)}>
+          <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
+            {selectedAd?.imageUrl ? (
+              <Image source={{ uri: selectedAd.imageUrl }} style={styles.modalAdImage} />
+            ) : null}
+
+            <Text style={styles.modalAdVendor}>{selectedAd?.vendorName}</Text>
+            <Text style={styles.modalAdTitle}>{selectedAd?.title}</Text>
+            <Text style={styles.modalAdDescription}>{selectedAd?.content}</Text>
+
+            <View style={styles.topUpInfoBox}>
+              <Text style={styles.topUpInfoTitle}>Top Up Information</Text>
+              <Text style={styles.topUpInfoText}>1. Choose a top-up package that matches your goals.</Text>
+              <Text style={styles.topUpInfoText}>2. Review bonus points and offer validity before purchase.</Text>
+              <Text style={styles.topUpInfoText}>3. Confirm payment to unlock available rewards instantly.</Text>
+            </View>
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={[styles.modalActionButton, styles.modalSecondaryButton]}
+                onPress={() => setSelectedAd(null)}
+              >
+                <Text style={styles.modalSecondaryButtonText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalActionButton, styles.modalPrimaryButton]}
+                onPress={() => {
+                  setSelectedAd(null);
+                  router.push("/(offers)/offersHome");
+                }}
+              >
+                <Text style={styles.modalPrimaryButtonText}>Open Top Up</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -334,6 +539,97 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  adSection: {
+    marginTop: 20,
+  },
+  adCard: {
+    width: CAROUSEL_ITEM_WIDTH,
+    height: Math.round(CAROUSEL_ITEM_WIDTH * 0.45),
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: Colors.background_beige,
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+  },
+  adImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+  },
+  adOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: 12,
+    backgroundColor: "rgba(17, 24, 39, 0.33)",
+  },
+  adVendor: {
+    color: Colors.background_cream,
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  adTitle: {
+    color: Colors.background_cream,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  adDescription: {
+    color: Colors.background_cream,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  adStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+  },
+  adStatusText: {
+    color: Colors.text_brown_gray,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  adEmptyState: {
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+    borderRadius: 12,
+    backgroundColor: Colors.background_beige,
+    padding: 12,
+    gap: 10,
+  },
+  retryButton: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.accent_terracotta,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: Colors.background_cream,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  adPagination: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 10,
+  },
+  adDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.text_earth,
+    opacity: 0.4,
+  },
+  adDotActive: {
+    width: 18,
+    borderRadius: 999,
+    opacity: 1,
+    backgroundColor: Colors.accent_terracotta,
+  },
   actionSection: {
     // marginBottom: 30,
     marginTop: 20,
@@ -455,6 +751,98 @@ const styles = StyleSheet.create({
   logoImage: {
     width: "100%",
     height: "100%",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(17, 24, 39, 0.5)",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    backgroundColor: Colors.background_cream,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+    overflow: "hidden",
+  },
+  modalAdImage: {
+    width: "100%",
+    height: 170,
+  },
+  modalAdVendor: {
+    color: Colors.text_earth,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 12,
+    marginHorizontal: 14,
+    textTransform: "uppercase",
+  },
+  modalAdTitle: {
+    color: Colors.text_charcoal,
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 4,
+    marginHorizontal: 14,
+  },
+  modalAdDescription: {
+    color: Colors.text_brown_gray,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 6,
+    marginHorizontal: 14,
+  },
+  topUpInfoBox: {
+    marginHorizontal: 14,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.background_beige,
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+    gap: 6,
+  },
+  topUpInfoTitle: {
+    color: Colors.text_charcoal,
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  topUpInfoText: {
+    color: Colors.text_brown_gray,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+  modalActionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+  },
+  modalActionButton: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalSecondaryButton: {
+    backgroundColor: Colors.background_beige,
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+  },
+  modalSecondaryButtonText: {
+    color: Colors.text_charcoal,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  modalPrimaryButton: {
+    backgroundColor: Colors.accent_terracotta,
+  },
+  modalPrimaryButtonText: {
+    color: Colors.background_cream,
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
 
