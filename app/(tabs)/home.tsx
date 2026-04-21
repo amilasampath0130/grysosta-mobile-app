@@ -40,6 +40,15 @@ interface QuickAction {
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const CAROUSEL_ITEM_WIDTH = SCREEN_WIDTH - 40;
 
+const formatVendorCategory = (value?: string) => {
+  if (!value) return "Featured Partner";
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+};
+
 const HomeScreen: React.FC = () => {
   const [ads, setAds] = useState<PublicAdvertisementItem[]>([]);
   const [isAdsLoading, setIsAdsLoading] = useState<boolean>(true);
@@ -365,38 +374,103 @@ const HomeScreen: React.FC = () => {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setSelectedAd(null)}>
           <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-            {selectedAd?.imageUrl ? (
-              <Image source={{ uri: selectedAd.imageUrl }} style={styles.modalAdImage} />
-            ) : null}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              <View style={styles.modalHero}>
+                {selectedAd?.imageUrl ? (
+                  <Image source={{ uri: selectedAd.imageUrl }} style={styles.modalAdImage} />
+                ) : null}
 
-            <Text style={styles.modalAdVendor}>{selectedAd?.vendorName}</Text>
-            <Text style={styles.modalAdTitle}>{selectedAd?.title}</Text>
-            <Text style={styles.modalAdDescription}>{selectedAd?.content}</Text>
+                <View style={styles.modalHeroShade} />
 
-            <View style={styles.topUpInfoBox}>
-              <Text style={styles.topUpInfoTitle}>Top Up Information</Text>
-              <Text style={styles.topUpInfoText}>1. Choose a top-up package that matches your goals.</Text>
-              <Text style={styles.topUpInfoText}>2. Review bonus points and offer validity before purchase.</Text>
-              <Text style={styles.topUpInfoText}>3. Confirm payment to unlock available rewards instantly.</Text>
-            </View>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setSelectedAd(null)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="close" size={20} color={Colors.background_cream} />
+                </TouchableOpacity>
 
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={[styles.modalActionButton, styles.modalSecondaryButton]}
-                onPress={() => setSelectedAd(null)}
-              >
-                <Text style={styles.modalSecondaryButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalActionButton, styles.modalPrimaryButton]}
-                onPress={() => {
-                  setSelectedAd(null);
-                  router.push("/(offers)/offersHome");
-                }}
-              >
-                <Text style={styles.modalPrimaryButtonText}>Open Top Up</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.vendorLogoShell}>
+                  {selectedAd?.vendorLogoUrl ? (
+                    <Image
+                      source={{ uri: selectedAd.vendorLogoUrl }}
+                      style={styles.vendorLogoImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.vendorLogoPlaceholder}>
+                      <Ionicons
+                        name="storefront-outline"
+                        size={30}
+                        color={Colors.accent_terracotta}
+                      />
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.modalContentSection}>
+                <View style={styles.vendorMetaRow}>
+                  <View style={styles.vendorPill}>
+                    <Ionicons
+                      name="sparkles-outline"
+                      size={14}
+                      color={Colors.accent_terracotta}
+                    />
+                    <Text style={styles.vendorPillText}>Verified Vendor</Text>
+                  </View>
+                  <View style={styles.vendorCategoryChip}>
+                    <Text style={styles.vendorCategoryChipText}>
+                      {formatVendorCategory(selectedAd?.vendorCategory)}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.modalAdVendor}>{selectedAd?.vendorName}</Text>
+                <Text style={styles.modalAdTitle}>{selectedAd?.title}</Text>
+                <Text style={styles.modalAdDescription}>{selectedAd?.content}</Text>
+
+                <View style={styles.vendorSpotlightCard}>
+                  <Text style={styles.vendorSpotlightEyebrow}>Vendor Spotlight</Text>
+                  <Text style={styles.vendorSpotlightTitle}>
+                    {formatVendorCategory(selectedAd?.vendorCategory)} experiences curated by {selectedAd?.vendorName}
+                  </Text>
+                  <Text style={styles.vendorSpotlightText}>
+                    Explore promotions, top-up rewards, and brand information before you continue to checkout.
+                  </Text>
+                </View>
+
+                <View style={styles.topUpInfoBox}>
+                  <Text style={styles.topUpInfoTitle}>Top Up Information</Text>
+                  <Text style={styles.topUpInfoText}>1. Choose a top-up package that matches your goals.</Text>
+                  <Text style={styles.topUpInfoText}>2. Review bonus points and offer validity before purchase.</Text>
+                  <Text style={styles.topUpInfoText}>3. Confirm payment to unlock available rewards instantly.</Text>
+                </View>
+
+                <View style={styles.modalActionRow}>
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, styles.modalSecondaryButton]}
+                    onPress={() => setSelectedAd(null)}
+                  >
+                    <Ionicons name="close-circle-outline" size={16} color={Colors.text_charcoal} />
+                    <Text style={styles.modalSecondaryButtonText}>Close</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, styles.modalPrimaryButton]}
+                    onPress={() => {
+                      setSelectedAd(null);
+                      router.push("/(offers)/offersHome");
+                    }}
+                  >
+                    <Ionicons name="wallet-outline" size={16} color={Colors.background_cream} />
+                    <Text style={styles.modalPrimaryButtonText}>Open Top Up</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -764,35 +838,152 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.background_sand,
     overflow: "hidden",
+    maxHeight: "88%",
+  },
+  modalScrollContent: {
+    paddingBottom: 18,
+  },
+  modalHero: {
+    height: 220,
+    position: "relative",
+    backgroundColor: Colors.background_sand,
+    justifyContent: "flex-end",
   },
   modalAdImage: {
     width: "100%",
-    height: 170,
+    height: "100%",
+    position: "absolute",
   },
-  modalAdVendor: {
-    color: Colors.text_earth,
+  modalHeroShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(17, 24, 39, 0.28)",
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(17, 24, 39, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
+  vendorLogoShell: {
+    width: 108,
+    height: 108,
+    borderRadius: 28,
+    backgroundColor: Colors.background_cream,
+    marginLeft: 18,
+    marginBottom: -38,
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+    zIndex: 2,
+  },
+  vendorLogoImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
+  },
+  vendorLogoPlaceholder: {
+    flex: 1,
+    borderRadius: 22,
+    backgroundColor: Colors.background_beige,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+  },
+  modalContentSection: {
+    paddingHorizontal: 16,
+    paddingTop: 48,
+  },
+  vendorMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  vendorPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: Colors.accent_olive,
+  },
+  vendorPillText: {
+    color: Colors.accent_terracotta,
     fontSize: 12,
     fontWeight: "700",
-    marginTop: 12,
-    marginHorizontal: 14,
-    textTransform: "uppercase",
+  },
+  vendorCategoryChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.background_sand,
+    backgroundColor: Colors.background_beige,
+  },
+  vendorCategoryChipText: {
+    color: Colors.text_brown_gray,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  modalAdVendor: {
+    color: Colors.text_charcoal,
+    fontSize: 22,
+    fontWeight: "800",
   },
   modalAdTitle: {
-    color: Colors.text_charcoal,
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 4,
-    marginHorizontal: 14,
+    color: Colors.accent_terracotta,
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   modalAdDescription: {
     color: Colors.text_brown_gray,
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 6,
-    marginHorizontal: 14,
+    marginTop: 10,
+  },
+  vendorSpotlightCard: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    gap: 6,
+  },
+  vendorSpotlightEyebrow: {
+    color: Colors.accent_terracotta,
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  vendorSpotlightTitle: {
+    color: Colors.text_charcoal,
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 22,
+  },
+  vendorSpotlightText: {
+    color: Colors.text_brown_gray,
+    fontSize: 13,
+    lineHeight: 19,
   },
   topUpInfoBox: {
-    marginHorizontal: 14,
     marginTop: 12,
     padding: 12,
     borderRadius: 12,
@@ -817,14 +1008,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginTop: 14,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
   },
   modalActionButton: {
     flex: 1,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
   modalSecondaryButton: {
     backgroundColor: Colors.background_beige,

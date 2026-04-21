@@ -5,6 +5,11 @@ export interface VendorListItem {
   name: string;
   category?: string;
   imageUrl?: string;
+  location?: string;
+  businessType?: string;
+  offering?: string;
+  serviceArea?: string;
+  operatingHours?: string;
 }
 
 interface ApprovedVendorsResponse {
@@ -15,6 +20,11 @@ interface ApprovedVendorsResponse {
     name: string;
     logoUrl?: string;
     category?: string;
+    location?: string;
+    businessType?: string;
+    offering?: string;
+    serviceArea?: string;
+    operatingHours?: string;
   }>;
 }
 
@@ -33,6 +43,11 @@ class VendorService {
       name: vendor.name,
       category: vendor.category,
       imageUrl: vendor.logoUrl,
+      location: vendor.location,
+      businessType: vendor.businessType,
+      offering: vendor.offering,
+      serviceArea: vendor.serviceArea,
+      operatingHours: vendor.operatingHours,
     }));
   }
 }

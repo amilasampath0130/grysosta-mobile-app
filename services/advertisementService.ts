@@ -9,6 +9,8 @@ export interface PublicAdvertisementItem {
   startDate?: string;
   endDate?: string;
   vendorName: string;
+  vendorCategory?: string;
+  vendorLogoUrl?: string;
 }
 
 interface PublicAdvertisementsResponse {
@@ -30,8 +32,22 @@ interface RawPublicAdvertisementItem {
   startDate?: string;
   endDate?: string;
   vendorName?: string;
+  vendorCategory?: string;
+  vendorLogoUrl?: string;
   vendor?: {
     name?: string;
+    vendorInfo?: {
+      logoUrl?: string;
+    };
+    vendorApplication?: {
+      business?: {
+        businessCategory?: string;
+      };
+      documents?: {
+        logoUrl?: string;
+      };
+    };
+    profileImage?: string;
   };
 }
 
@@ -63,6 +79,15 @@ class AdvertisementService {
           endDate: item.endDate,
           vendorName:
             String(item.vendorName || item.vendor?.name || "Verified Vendor").trim(),
+          vendorCategory: item.vendorCategory || item.vendor?.vendorApplication?.business?.businessCategory,
+          vendorLogoUrl:
+            String(
+              item.vendorLogoUrl ||
+                item.vendor?.vendorInfo?.logoUrl ||
+                item.vendor?.vendorApplication?.documents?.logoUrl ||
+                item.vendor?.profileImage ||
+                "",
+            ).trim() || undefined,
         } as PublicAdvertisementItem;
       })
       .filter((item): item is PublicAdvertisementItem => Boolean(item));

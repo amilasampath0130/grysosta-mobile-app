@@ -11,10 +11,25 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
+
+const formatCategory = (value?: string) => {
+  if (!value) return "General";
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const displayValue = (value?: string) => {
+  const trimmed = String(value || "").trim();
+  return trimmed.length > 0 ? trimmed : "Not provided";
+};
 
 export default function CoreScreen() {
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
@@ -130,30 +145,114 @@ export default function CoreScreen() {
         >
           <Pressable style={styles.modalOverlay} onPress={() => setSelectedVendor(null)}>
             <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setSelectedVendor(null)}
-              >
-                <Text style={styles.closeButtonText}>X</Text>
-              </TouchableOpacity>
+              <View style={styles.modalHeroArea}>
+                <View style={styles.modalHeroGradient} />
 
-              {selectedVendor?.imageUrl ? (
-                <Image
-                  source={{ uri: selectedVendor.imageUrl }}
-                  style={styles.modalLogoImage}
-                />
-              ) : (
-                <View style={styles.modalLogoPlaceholder} />
-              )}
+                <View style={styles.logoRingOuter}>
+                  <View style={styles.logoRingInner}>
+                    {selectedVendor?.imageUrl ? (
+                      <Image
+                        source={{ uri: selectedVendor.imageUrl }}
+                        style={styles.modalLogoImage}
+                      />
+                    ) : (
+                      <View style={styles.modalLogoPlaceholder}>
+                        <Ionicons
+                          name="storefront-outline"
+                          size={34}
+                          color={Theme.colors.accent_terracotta}
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
 
-              <Text style={styles.modalVendorName}>{selectedVendor?.name}</Text>
-              <Text style={styles.modalVendorCategory}>
-                Category: {selectedVendor?.category || "General"}
-              </Text>
-              <Text style={styles.modalVendorInfo}>Vendor ID: {selectedVendor?.id}</Text>
-              <Text style={styles.modalVendorInfo}>
-                More profile details can be added here when available from the API.
-              </Text>
+              <View style={styles.modalBody}>
+                <View style={styles.categoryBadge}>
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={12}
+                    color={Theme.colors.accent_terracotta}
+                  />
+                  <Text style={styles.categoryBadgeText}>
+                    {formatCategory(selectedVendor?.category)}
+                  </Text>
+                </View>
+
+                <Text style={styles.modalVendorName}>{selectedVendor?.name}</Text>
+
+                <View style={styles.vendorDetailCard}>
+                  <Text style={styles.vendorDetailTitle}>Vendor Details</Text>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="pricetag-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Category: {formatCategory(selectedVendor?.category)}
+                    </Text>
+                  </View>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="location-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Location: {displayValue(selectedVendor?.location)}
+                    </Text>
+                  </View>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="briefcase-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Business Type: {displayValue(selectedVendor?.businessType)}
+                    </Text>
+                  </View>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="layers-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Offering: {displayValue(selectedVendor?.offering)}
+                    </Text>
+                  </View>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="map-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Service Area: {displayValue(selectedVendor?.serviceArea)}
+                    </Text>
+                  </View>
+                  <View style={styles.vendorDetailRow}>
+                    <Ionicons
+                      name="time-outline"
+                      size={14}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                    <Text style={styles.modalVendorInfo}>
+                      Hours: {displayValue(selectedVendor?.operatingHours)}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.modalCloseCta}
+                  onPress={() => setSelectedVendor(null)}
+                >
+                  <Text style={styles.modalCloseCtaText}>Close</Text>
+                </TouchableOpacity>
+              </View>
             </Pressable>
           </Pressable>
         </Modal>
@@ -293,64 +392,119 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: Theme.colors.background_beige,
-    borderRadius: 14,
+    borderRadius: 18,
     borderColor: Theme.colors.border,
     borderWidth: 1,
-    padding: 18,
-    alignItems: "center",
+    overflow: "hidden",
   },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  modalHeroArea: {
+    height: 170,
+    backgroundColor: Theme.colors.accent_terracotta,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 0,
+    position: "relative",
+  },
+  modalHeroGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(17,24,39,0.2)",
+  },
+  logoRingOuter: {
+    width: 152,
+    height: 152,
+    borderRadius: 76,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    padding: 8,
+    marginBottom: -52,
+  },
+  logoRingInner: {
+    flex: 1,
+    borderRadius: 999,
+    backgroundColor: Theme.colors.background_beige,
+    padding: 5,
+  },
+  modalLogoImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: Theme.colors.background_sand,
+  },
+  modalLogoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
     backgroundColor: Theme.colors.background_sand,
     alignItems: "center",
     justifyContent: "center",
   },
-  closeButtonText: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 14,
+  modalBody: {
+    paddingTop: 64,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    alignItems: "center",
+  },
+  categoryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Theme.colors.accent_olive,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginBottom: 8,
+  },
+  categoryBadgeText: {
+    color: Theme.colors.accent_terracotta,
+    fontSize: 12,
     fontWeight: "700",
-  },
-  modalLogoImage: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: Theme.colors.background_sand,
-    marginTop: 8,
-    marginBottom: 12,
-  },
-  modalLogoPlaceholder: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: Theme.colors.background_sand,
-    marginTop: 8,
-    marginBottom: 12,
   },
   modalVendorName: {
     color: Theme.colors.text_charcoal,
     fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 8,
+    fontWeight: "800",
+    marginBottom: 10,
     textAlign: "center",
   },
-  modalVendorCategory: {
-    color: Theme.colors.text_brown_gray,
+  vendorDetailCard: {
+    width: "100%",
+    backgroundColor: Theme.colors.background_cream,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    marginBottom: 14,
+  },
+  vendorDetailTitle: {
+    color: Theme.colors.text_charcoal,
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
+    fontWeight: "800",
+    marginBottom: 2,
+  },
+  vendorDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   modalVendorInfo: {
     color: Theme.colors.text_brown_gray,
     fontSize: 13,
     fontWeight: "500",
-    marginBottom: 6,
-    textAlign: "center",
+    flex: 1,
+    lineHeight: 18,
+  },
+  modalCloseCta: {
+    width: "100%",
+    backgroundColor: Theme.colors.background_sand,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
+  modalCloseCtaText: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 14,
+    fontWeight: "700",
   },
   primaryButton: {
     backgroundColor: Theme.colors.accent_terracotta,
