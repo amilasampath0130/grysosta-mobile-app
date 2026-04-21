@@ -5,6 +5,7 @@ import {
   Image,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -19,6 +20,7 @@ export default function VendorSelectionScreen() {
   const [selected, setSelected] = useState<string[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const favoriteVendorIds = useGameplayStore(
     (state) => state.favoriteVendorIds,
@@ -92,13 +94,27 @@ export default function VendorSelectionScreen() {
     setSelectedVendors(selected);
     router.push("/(Game)/gameHome");
   };
+  const filteredVendors = useMemo(() => {
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    if (!trimmedQuery) return vendors;
 
+    return vendors.filter((vendor) => {
+      const searchableText = `${vendor.name} ${vendor.category || ""}`.toLowerCase();
+      return searchableText.includes(trimmedQuery);
+    });
+  }, [searchQuery, vendors]);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.title}>Select 3 Vendors to Play</Text>
         <Text style={styles.subtitle}>{instructionText}</Text>
-
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search vendors by name or category"
+          placeholderTextColor={Theme.colors.text_earth}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
         {isLoading && (
           <View style={styles.statusRow}>
             <ActivityIndicator color={Theme.colors.accent_terracotta} />
@@ -111,10 +127,8 @@ export default function VendorSelectionScreen() {
         )}
 
         <FlatList
-          data={vendors}
+          data={filteredVendors}
           keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.vendorRow}
           contentContainerStyle={styles.vendorList}
           ListEmptyComponent={
             !isLoading && !errorMessage ? (
@@ -141,18 +155,22 @@ export default function VendorSelectionScreen() {
                   />
                 </TouchableOpacity>
 
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.logoImage}
-                  />
-                ) : (
-                  <View style={styles.logoPlaceholder} />
-                )}
+                <View style={styles.vendorRowContent}>
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.logoImage}
+                    />
+                  ) : (
+                    <View style={styles.logoPlaceholder} />
+                  )}
 
-                <Text style={styles.vendorName}>{item.name}</Text>
-                <Text style={styles.vendorCategory}>{item.category || ""}</Text>
-                {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
+                  <View style={styles.vendorMeta}>
+                    <Text style={styles.vendorName}>{item.name}</Text>
+                    <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
+                    {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
+                  </View>
+                </View>
               </TouchableOpacity>
             );
           }}
@@ -214,18 +232,14 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingBottom: 10,
   },
-  vendorRow: {
-    gap: 10,
-  },
   vendorCard: {
-    flex: 1,
+    width: "100%",
     backgroundColor: Theme.colors.background_beige,
     borderColor: Theme.colors.border,
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
-    minHeight: 105,
-    gap: 4,
+    minHeight: 90,
   },
   vendorCardSelected: {
     borderColor: Theme.colors.accent_terracotta,
@@ -234,19 +248,26 @@ const styles = StyleSheet.create({
   heartButton: {
     alignSelf: "flex-end",
   },
+  vendorRowContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   logoImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Theme.colors.background_sand,
-    marginBottom: 6,
   },
   logoPlaceholder: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Theme.colors.background_sand,
-    marginBottom: 6,
+  },
+  vendorMeta: {
+    flex: 1,
+    gap: 2,
   },
   vendorName: {
     color: Theme.colors.text_charcoal,
@@ -267,6 +288,7 @@ const styles = StyleSheet.create({
     color: Theme.colors.text_brown_gray,
     fontSize: 13,
     fontWeight: "600",
+    textAlign: "center",
     paddingTop: 8,
   },
   primaryButton: {
@@ -283,5 +305,16 @@ const styles = StyleSheet.create({
     color: Theme.colors.background_beige,
     fontSize: 15,
     fontWeight: "700",
+  },
+    searchInput: {
+    backgroundColor: Theme.colors.background_beige,
+    borderColor: Theme.colors.border,
+    borderWidth: 2,
+    borderRadius: 10,
+    color: Theme.colors.text_charcoal,
+    fontSize: 14,
+    fontWeight: "500",
+    paddingHorizontal: 12,
+    paddingVertical: 11,
   },
 });

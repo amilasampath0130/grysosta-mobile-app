@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type SecureStoreModule = typeof import("expo-secure-store");
 
@@ -23,6 +24,11 @@ const getSecureStore = (): SecureStoreModule | null => {
 };
 
 const memoryStore = new Map<string, string>();
+const SECURE_STORE_MAX_SAFE_BYTES = 1900;
+
+const shouldUseAsyncStorageFallback = (value: string): boolean => {
+  return value.length > SECURE_STORE_MAX_SAFE_BYTES;
+};
 
 export const safeSetItem = async (
   key: string,
@@ -37,6 +43,25 @@ export const safeSetItem = async (
     }
 
     const SecureStore = getSecureStore();
+
+    if (shouldUseAsyncStorageFallback(value)) {
+      await AsyncStorage.setItem(key, value);
+      if (SecureStore) {
+        const isAvailable =
+          typeof SecureStore.isAvailableAsync === "function"
+            ? await SecureStore.isAvailableAsync()
+            : false;
+
+        if (isAvailable) {
+          await SecureStore.deleteItemAsync(key);
+        }
+      }
+      memoryStore.delete(key);
+      return;
+    }
+
+    await AsyncStorage.removeItem(key);
+
     if (!SecureStore) {
       memoryStore.set(key, value);
       return;
@@ -67,6 +92,12 @@ export const safeGetItem = async (key: string): Promise<string | null> => {
     }
 
     const SecureStore = getSecureStore();
+    const asyncValue = await AsyncStorage.getItem(key);
+
+    if (asyncValue !== null) {
+      return asyncValue;
+    }
+
     if (!SecureStore) {
       return memoryStore.get(key) ?? null;
     }
@@ -96,6 +127,8 @@ export const safeDeleteItem = async (key: string): Promise<void> => {
     }
 
     const SecureStore = getSecureStore();
+    await AsyncStorage.removeItem(key);
+
     if (!SecureStore) {
       memoryStore.delete(key);
       return;
