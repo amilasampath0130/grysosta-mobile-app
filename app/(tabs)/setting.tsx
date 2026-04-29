@@ -7,7 +7,6 @@ import {
   Switch,
   TouchableOpacity,
   Image,
-  Alert,
   ScrollView,
   useWindowDimensions,
 } from "react-native";
@@ -34,13 +33,21 @@ const Settings: React.FC<Props> = ({ navigation }) => {
 
   const onClearCache = () => {
     // implement actual cache clearing logic
-    Alert.alert("Clear cache", "Cache cleared successfully.");
+    showAlert({
+      title: "Clear cache",
+      message: "Cache cleared successfully.",
+      type: "success",
+    });
   };
 
   const onContactSupport = () => {
     // Example: navigation to a support screen or open mailto
     // navigation?.navigate("Support");
-    Alert.alert("Contact", "Open support screen or mail client.");
+    showAlert({
+      title: "Contact",
+      message: "Open support screen or mail client.",
+      type: "info",
+    });
   };
 
   const onAbout = () => {
@@ -50,7 +57,11 @@ const Settings: React.FC<Props> = ({ navigation }) => {
 
   const onRate = () => {
     // open store link
-    Alert.alert("Rate", "Open app store link to rate.");
+    showAlert({
+      title: "Rate",
+      message: "Open app store link to rate.",
+      type: "info",
+    });
   };
 
   const onLogout = () => {

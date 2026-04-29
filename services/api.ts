@@ -163,8 +163,6 @@ class ApiService {
             break;
           }
 
-          console.error('API request failed:', error);
-
           if (isApiError(error)) {
             throw error;
           }

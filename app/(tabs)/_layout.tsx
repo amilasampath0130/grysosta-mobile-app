@@ -1,30 +1,10 @@
 import React from "react";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, Alert } from "react-native";
 import { Theme } from "@/theme";
 
 // ✅ ADD DEFAULT EXPORT
 export default function TabsLayout() {
-  const router = useRouter();
-
-  const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: () => {
-          // For now, just navigate to auth
-          router.replace("/(auth)");
-        },
-      },
-    ]);
-  };
-
   return (
     <Tabs
       screenOptions={{
@@ -48,6 +28,15 @@ export default function TabsLayout() {
           title: "Home",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="myRewards"
+        options={{
+          title: "My Rewards",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="gift-outline" size={size} color={color} />
           ),
         }}
       />

@@ -15,13 +15,20 @@ import { router } from "expo-router";
 import { Theme } from "@/theme";
 import { useGameplayStore } from "@/store/gameplayStore";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
+import { gameService } from "@/services/gameService";
+import { useAlert } from "@/contexts/AlertContext";
 
 export default function VendorSelectionScreen() {
+  const { showAlert } = useAlert();
   const [selected, setSelected] = useState<string[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSavingSelection, setIsSavingSelection] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasActiveSelection, setHasActiveSelection] = useState<boolean>(false);
+  const [selectionExpiresAt, setSelectionExpiresAt] = useState<string | null>(null);
+
   const favoriteVendorIds = useGameplayStore(
     (state) => state.favoriteVendorIds,
   );
@@ -35,13 +42,27 @@ export default function VendorSelectionScreen() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadVendors = async () => {
+    const loadInitialData = async () => {
       try {
         setIsLoading(true);
         setErrorMessage(null);
-        const approved = await vendorService.getApprovedVendors();
+        const [approved, selectionStatus] = await Promise.all([
+          vendorService.getApprovedVendors(),
+          gameService.getVendorSelectionStatus(),
+        ]);
         if (cancelled) return;
+
         setVendors(approved);
+
+        if (selectionStatus.hasActiveSelection && selectionStatus.selection) {
+          setHasActiveSelection(true);
+          setSelectionExpiresAt(selectionStatus.selection.expiresAt);
+          setSelected(selectionStatus.selection.selectedVendors);
+          setSelectedVendors(selectionStatus.selection.selectedVendors);
+        } else {
+          setHasActiveSelection(false);
+          setSelectionExpiresAt(null);
+        }
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Failed to fetch vendors";
@@ -53,7 +74,7 @@ export default function VendorSelectionScreen() {
       }
     };
 
-    loadVendors();
+    loadInitialData();
 
     return () => {
       cancelled = true;
@@ -61,17 +82,34 @@ export default function VendorSelectionScreen() {
   }, []);
 
   const selectedCount = selected.length;
-  const canContinue = selectedCount >= 3;
+  const canContinue = hasActiveSelection || selectedCount === 3;
+
+  const formattedExpiry = useMemo(() => {
+    if (!selectionExpiresAt) return "";
+    return new Date(selectionExpiresAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }, [selectionExpiresAt]);
 
   const instructionText = useMemo(() => {
+    if (hasActiveSelection) {
+      return `Selection locked until ${formattedExpiry}.`;
+    }
+
     if (selectedCount >= 3) {
-      return "Great! Tap Continue to Play.";
+      return "Great! Tap Save & Continue.";
     }
 
     return `Select ${3 - selectedCount} more vendor${3 - selectedCount === 1 ? "" : "s"} to continue.`;
-  }, [selectedCount]);
+  }, [formattedExpiry, hasActiveSelection, selectedCount]);
 
   const handleVendorTap = (vendorId: string) => {
+    if (hasActiveSelection) {
+      return;
+    }
+
     const exists = selected.includes(vendorId);
 
     if (exists) {
@@ -91,9 +129,34 @@ export default function VendorSelectionScreen() {
       return;
     }
 
-    setSelectedVendors(selected);
-    router.push("/(Game)/gameHome");
+    if (hasActiveSelection) {
+      router.push("/(Game)/gameHome");
+      return;
+    }
+
+    void saveSelectionAndContinue();
   };
+
+  const saveSelectionAndContinue = async () => {
+    try {
+      setIsSavingSelection(true);
+      const response = await gameService.saveVendorSelection(selected);
+      setSelectedVendors(response.selection.selectedVendors);
+      setHasActiveSelection(true);
+      setSelectionExpiresAt(response.selection.expiresAt);
+      router.push("/(Game)/gameHome");
+    } catch (error) {
+      showAlert({
+        title: "Selection Failed",
+        message:
+          error instanceof Error ? error.message : "Unable to save vendor selection",
+        type: "error",
+      });
+    } finally {
+      setIsSavingSelection(false);
+    }
+  };
+
   const filteredVendors = useMemo(() => {
     const trimmedQuery = searchQuery.trim().toLowerCase();
     if (!trimmedQuery) return vendors;
@@ -179,12 +242,18 @@ export default function VendorSelectionScreen() {
         <TouchableOpacity
           style={[
             styles.primaryButton,
-            !canContinue && styles.primaryButtonDisabled,
+            (!canContinue || isSavingSelection) && styles.primaryButtonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={!canContinue}
+          disabled={!canContinue || isSavingSelection}
         >
-          <Text style={styles.primaryButtonText}>Continue to Play</Text>
+          <Text style={styles.primaryButtonText}>
+            {hasActiveSelection
+              ? "Continue to Play"
+              : isSavingSelection
+                ? "Saving..."
+                : "Save & Continue"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

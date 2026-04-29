@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Modal,
   StyleSheet,
@@ -10,41 +11,24 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Theme } from "@/theme";
-import { MVP_REWARDS } from "@/constants/gameMvp";
-import { RewardItem, useGameplayStore } from "@/store/gameplayStore";
 import { Images } from "@/assets/images/images";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
+import { gameService, type TapCoinResponse } from "@/services/gameService";
+import { useAlert } from "@/contexts/AlertContext";
 
 const COINS = [1, 2, 3, 4, 5];
 
-const createReward = (vendorName: string): RewardItem => {
-  const randomTemplate = MVP_REWARDS[Math.floor(Math.random() * MVP_REWARDS.length)];
-  const wonAt = new Date().toISOString();
-  const expiresAt = new Date(
-    Date.now() + randomTemplate.expiryDays * 24 * 60 * 60 * 1000,
-  ).toISOString();
-
-  return {
-    id: `${randomTemplate.id}-${Date.now()}`,
-    title: randomTemplate.title,
-    vendor: vendorName,
-    wonAt,
-    expiresAt,
-    isRedeemed: false,
-  };
-};
+type WonReward = NonNullable<TapCoinResponse["reward"]>;
 
 export default function GameHome() {
+  const { showAlert } = useAlert();
   const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
-  const [revealedReward, setRevealedReward] = useState<RewardItem | null>(null);
-  const [showPostWin, setShowPostWin] = useState(false);
+  const [revealedReward, setRevealedReward] = useState<WonReward | null>(null);
+  const [cooldownText, setCooldownText] = useState<string | null>(null);
+  const [isTapping, setIsTapping] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
-
-  const addRewardToHistory = useGameplayStore(
-    (state) => state.addRewardToHistory,
-  );
-  const saveReward = useGameplayStore((state) => state.saveReward);
-  const selectedVendorIds = useGameplayStore((state) => state.selectedVendorIds);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,68 +51,119 @@ export default function GameHome() {
     };
   }, []);
 
-  const vendorById = useMemo(() => {
-    const map = new Map<string, VendorListItem>();
-    for (const vendor of vendors) {
-      map.set(vendor.id, vendor);
-    }
-    return map;
-  }, [vendors]);
-
-  const getVendorLogo = (vendorName?: string) => {
-    if (!vendorName) return null;
-    const vendor = vendors.find((item) => item.name === vendorName);
-    return vendor?.imageUrl || null;
-  };
-
   const hasPlayed = selectedCoin !== null;
 
   const instructionText = useMemo(() => {
+    if (isTapping) {
+      return "Revealing your offer...";
+    }
+
+    if (cooldownText) {
+      return `Cooldown active: ${cooldownText}`;
+    }
+
     if (hasPlayed) {
       return "Reward revealed. Choose an action below.";
     }
 
     return "Select 1 Coin to Reveal Your Reward";
-  }, [hasPlayed]);
+  }, [cooldownText, hasPlayed, isTapping]);
 
   const onSelectCoin = (coinIndex: number) => {
-    if (hasPlayed) {
+    if (hasPlayed || isTapping || isRedeeming || isSaving) {
       return;
     }
 
-    const selectedVendorId =
-      selectedVendorIds[Math.floor(Math.random() * Math.max(1, selectedVendorIds.length))];
-
-    const vendorName =
-      (selectedVendorId && vendorById.get(selectedVendorId)?.name) ||
-      vendors[Math.floor(Math.random() * Math.max(1, vendors.length))]?.name ||
-      "Vendor";
-
-    const reward = createReward(vendorName);
-    setSelectedCoin(coinIndex);
-    setRevealedReward(reward);
-    addRewardToHistory(reward);
+    void tapCoin(coinIndex);
   };
 
-  const handleSaveToDashboard = () => {
+  const tapCoin = async (coinIndex: number) => {
+    try {
+      setIsTapping(true);
+      setCooldownText(null);
+      const response = await gameService.tapCoin();
+      if (!response.success || !response.reward) {
+        throw new Error(response.message || "Unable to play now");
+      }
+
+      setSelectedCoin(coinIndex);
+      setRevealedReward(response.reward);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to play now";
+      if (/tap again in/i.test(message)) {
+        const cooldown = message.replace(/.*tap again in\s*/i, "").trim();
+        setCooldownText(cooldown);
+      }
+      showAlert({
+        title: "Coin Tap",
+        message,
+        type: "warning",
+      });
+    } finally {
+      setIsTapping(false);
+    }
+  };
+
+  const handleSaveForLater = async () => {
     if (!revealedReward) {
       return;
     }
 
-    saveReward(revealedReward);
-    setRevealedReward(null);
-    setShowPostWin(true);
+    try {
+      setIsSaving(true);
+      const response = await gameService.saveReward(revealedReward.id);
+      if (!response.success) {
+        throw new Error(response.message || "Failed to save reward");
+      }
+
+      setRevealedReward(null);
+      router.replace("/(tabs)/myRewards");
+    } catch (error) {
+      showAlert({
+        title: "Save Failed",
+        message:
+          error instanceof Error ? error.message : "Unable to save reward",
+        type: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleViewOffers = () => {
-    setRevealedReward(null);
-    router.replace("/(offers)/offersHome");
+  const handleRedeemNow = async () => {
+    if (!revealedReward) {
+      return;
+    }
+
+    try {
+      setIsRedeeming(true);
+      const response = await gameService.redeemReward(revealedReward.id);
+      if (!response.success || !response.coupon) {
+        throw new Error(response.message || "Unable to redeem reward");
+      }
+
+      setRevealedReward(null);
+      router.replace({
+        pathname: "/(Game)/coupon",
+        params: { couponId: response.coupon.id },
+      });
+    } catch (error) {
+      showAlert({
+        title: "Redeem Failed",
+        message:
+          error instanceof Error ? error.message : "Unable to redeem reward",
+        type: "error",
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
-  const closePostWinToHome = () => {
-    setShowPostWin(false);
-    router.replace("/(tabs)/home");
-  };
+  const logoUrl =
+    revealedReward?.offer.vendorName
+      ? vendors.find((item) => item.name === revealedReward.offer.vendorName)?.imageUrl ||
+        null
+      : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -145,11 +180,13 @@ export default function GameHome() {
                 selectedCoin === coin && styles.coinSelected,
               ]}
               onPress={() => onSelectCoin(coin)}
+              disabled={isTapping || isRedeeming || isSaving}
             >
               <Image source={Images.logo} style={styles.coinLogo} />
             </TouchableOpacity>
           ))}
         </View>
+        {isTapping && <ActivityIndicator color={Theme.colors.accent_terracotta} />}
       </View>
 
       <Modal transparent visible={!!revealedReward} animationType="fade">
@@ -158,55 +195,37 @@ export default function GameHome() {
             <Text style={styles.modalTitle}>🎉 Congratulations!</Text>
             <Text style={styles.modalSubtitle}>You won:</Text>
             <View style={styles.rewardBadgeRow}>
-              {getVendorLogo(revealedReward?.vendor) ? (
+              {logoUrl ? (
                 <Image
-                  source={{ uri: getVendorLogo(revealedReward?.vendor) || "" }}
+                  source={{ uri: logoUrl }}
                   style={styles.logoImage}
                 />
               ) : null}
-              <Text style={styles.rewardVendor}>{revealedReward?.vendor}</Text>
+              <Text style={styles.rewardVendor}>{revealedReward?.offer.vendorName}</Text>
             </View>
-            <Text style={styles.rewardText}>{revealedReward?.title}</Text>
+            <Text style={styles.rewardText}>{revealedReward?.offer.title}</Text>
+            <Text style={styles.rewardMeta}>Discount: {revealedReward?.offer.discount}%</Text>
+            <Text style={styles.rewardMeta}>
+              Expires: {new Date(revealedReward?.expiresAt || "").toLocaleDateString()}
+            </Text>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={handleSaveToDashboard}
+                onPress={handleSaveForLater}
+                disabled={isSaving || isRedeeming}
               >
                 <Text style={styles.secondaryButtonText}>
-                  Save to Dashboard
+                  {isSaving ? "Saving..." : "Save for Later"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.primaryButton}
-                onPress={handleViewOffers}
-              >
-                <Text style={styles.primaryButtonText}>View Offers</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal transparent visible={showPostWin} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              Come back tomorrow for another chance to win!
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={closePostWinToHome}
-              >
-                <Text style={styles.secondaryButtonText}>Skip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={handleViewOffers}
+                onPress={handleRedeemNow}
+                disabled={isRedeeming || isSaving}
               >
                 <Text style={styles.primaryButtonText}>
-                  Buy GRYSOSTA™ Coins
+                  {isRedeeming ? "Redeeming..." : "Redeem Now"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -286,6 +305,11 @@ const styles = StyleSheet.create({
     color: Theme.colors.accent_terracotta,
     fontSize: 16,
     fontWeight: "700",
+  },
+  rewardMeta: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 13,
+    fontWeight: "600",
   },
   rewardBadgeRow: {
     flexDirection: "row",
