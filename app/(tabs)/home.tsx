@@ -295,9 +295,9 @@ const HomeScreen: React.FC = () => {
         {/* Hero Section */}
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Today</Text>
-          <Text style={styles.heroTitle}>Earn points and unlock rewards</Text>
+          <Text style={styles.heroTitle}>Claim This Week Offer</Text>
           <TouchableOpacity style={styles.heroCta} onPress={handlePress}>
-            <Text style={styles.heroCtaText}>Claim Rewards</Text>
+            <Text style={styles.heroCtaText}>Start Claiming</Text>
             <Ionicons
               name="arrow-forward"
               size={16}

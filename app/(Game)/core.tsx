@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
+import { gameService } from "@/services/gameService";
 
 const formatCategory = (value?: string) => {
   if (!value) return "General";
@@ -37,6 +38,8 @@ export default function CoreScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedVendor, setSelectedVendor] = useState<VendorListItem | null>(null);
+  const [hasActiveSelection, setHasActiveSelection] = useState<boolean>(false);
+  const [selectionExpiresAt, setSelectionExpiresAt] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,9 +48,14 @@ export default function CoreScreen() {
       try {
         setIsLoading(true);
         setErrorMessage(null);
-        const approved = await vendorService.getApprovedVendors();
+        const [approved, selectionStatus] = await Promise.all([
+          vendorService.getApprovedVendors(),
+          gameService.getVendorSelectionStatus(),
+        ]);
         if (cancelled) return;
         setVendors(approved);
+        setHasActiveSelection(selectionStatus.hasActiveSelection);
+        setSelectionExpiresAt(selectionStatus.selection?.expiresAt || null);
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Failed to fetch vendors";
@@ -85,14 +93,28 @@ export default function CoreScreen() {
             Win exclusive offers from your favorite brands.
           </Text>
         </View>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search vendors by name or category"
-          placeholderTextColor={Theme.colors.text_earth}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        <Text style={styles.instruction}>Select 3 Vendors to Play</Text>
+        {!hasActiveSelection && (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search vendors by name or category"
+            placeholderTextColor={Theme.colors.text_earth}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        )}
+        <Text style={styles.instruction}>
+          {hasActiveSelection
+            ? `Vendor selection locked until ${
+                selectionExpiresAt
+                  ? new Date(selectionExpiresAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "next cycle"
+              }.`
+            : "Select 3 Vendors to Play"}
+        </Text>
 
 
 
@@ -107,35 +129,37 @@ export default function CoreScreen() {
           <Text style={styles.errorText}>{errorMessage}</Text>
         )}
 
-        <FlatList
-          data={filteredVendors}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.vendorList}
-          ListEmptyComponent={
-            !isLoading ? (
-              <Text style={styles.emptyText}>No vendors found.</Text>
-            ) : null
-          }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.vendorCard}
-              activeOpacity={0.85}
-              onPress={() => setSelectedVendor(item)}
-            >
-              {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.logoImage} />
-              ) : (
-                <View style={styles.logoPlaceholder} />
-              )}
+        {!hasActiveSelection && (
+          <FlatList
+            data={filteredVendors}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.vendorList}
+            ListEmptyComponent={
+              !isLoading ? (
+                <Text style={styles.emptyText}>No vendors found.</Text>
+              ) : null
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.vendorCard}
+                activeOpacity={0.85}
+                onPress={() => setSelectedVendor(item)}
+              >
+                {item.imageUrl ? (
+                  <Image source={{ uri: item.imageUrl }} style={styles.logoImage} />
+                ) : (
+                  <View style={styles.logoPlaceholder} />
+                )}
 
-              <View style={styles.vendorMeta}>
-                <Text style={styles.vendorName}>{item.name}</Text>
-                <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
-                <Text style={styles.vendorHint}>Tap to view full details</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
+                <View style={styles.vendorMeta}>
+                  <Text style={styles.vendorName}>{item.name}</Text>
+                  <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
+                  <Text style={styles.vendorHint}>Tap to view full details</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        )}
 
         <Modal
           visible={Boolean(selectedVendor)}
@@ -259,9 +283,15 @@ export default function CoreScreen() {
 
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.push("/(Game)/vendorSelection")}
+          onPress={() =>
+            router.push(
+              hasActiveSelection ? "/(Game)/gameHome" : "/(Game)/vendorSelection",
+            )
+          }
         >
-          <Text style={styles.primaryButtonText}>Start Vendor Selection</Text>
+          <Text style={styles.primaryButtonText}>
+            {hasActiveSelection ? "Claim This Week Offer" : "Start Vendor Selection"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

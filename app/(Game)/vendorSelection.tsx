@@ -146,10 +146,22 @@ export default function VendorSelectionScreen() {
       setSelectionExpiresAt(response.selection.expiresAt);
       router.push("/(Game)/gameHome");
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save vendor selection";
+
+      if (/locked until current cycle expires/i.test(message)) {
+        const latest = await gameService.getVendorSelectionStatus();
+        if (latest.hasActiveSelection && latest.selection) {
+          setHasActiveSelection(true);
+          setSelectionExpiresAt(latest.selection.expiresAt);
+          setSelected(latest.selection.selectedVendors);
+          setSelectedVendors(latest.selection.selectedVendors);
+        }
+      }
+
       showAlert({
         title: "Selection Failed",
-        message:
-          error instanceof Error ? error.message : "Unable to save vendor selection",
+        message,
         type: "error",
       });
     } finally {
@@ -166,18 +178,29 @@ export default function VendorSelectionScreen() {
       return searchableText.includes(trimmedQuery);
     });
   }, [searchQuery, vendors]);
+
+  const selectedVendorItems = useMemo(
+    () => vendors.filter((vendor) => selected.includes(vendor.id)),
+    [selected, vendors],
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Select 3 Vendors to Play</Text>
+        <Text style={styles.title}>
+          {hasActiveSelection ? "Selected Vendors" : "Select 3 Vendors to Play"}
+        </Text>
         <Text style={styles.subtitle}>{instructionText}</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search vendors by name or category"
-          placeholderTextColor={Theme.colors.text_earth}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+
+        {!hasActiveSelection && (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search vendors by name or category"
+            placeholderTextColor={Theme.colors.text_earth}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        )}
         {isLoading && (
           <View style={styles.statusRow}>
             <ActivityIndicator color={Theme.colors.accent_terracotta} />
@@ -189,55 +212,72 @@ export default function VendorSelectionScreen() {
           <Text style={styles.errorText}>{errorMessage}</Text>
         )}
 
-        <FlatList
-          data={filteredVendors}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.vendorList}
-          ListEmptyComponent={
-            !isLoading && !errorMessage ? (
-              <Text style={styles.emptyText}>No vendors available.</Text>
-            ) : null
-          }
-          renderItem={({ item }) => {
-            const isSelected = selected.includes(item.id);
-            const isFavorite = favoriteVendorIds.includes(item.id);
-
-            return (
-              <TouchableOpacity
-                style={[styles.vendorCard, isSelected && styles.vendorCardSelected]}
-                onPress={() => handleVendorTap(item.id)}
-              >
-                <TouchableOpacity
-                  style={styles.heartButton}
-                  onPress={() => toggleFavoriteVendor(item.id)}
-                >
-                  <Ionicons
-                    name={isFavorite ? "heart" : "heart-outline"}
-                    size={18}
-                    color={Theme.colors.accent_terracotta}
-                  />
-                </TouchableOpacity>
-
-                <View style={styles.vendorRowContent}>
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.logoImage}
-                    />
-                  ) : (
-                    <View style={styles.logoPlaceholder} />
-                  )}
-
-                  <View style={styles.vendorMeta}>
-                    <Text style={styles.vendorName}>{item.name}</Text>
-                    <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
-                    {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
-                  </View>
+        {hasActiveSelection ? (
+          <View style={styles.lockedCard}>
+            {selectedVendorItems.length === 0 ? (
+              <Text style={styles.emptyText}>Your selected vendors are active.</Text>
+            ) : (
+              selectedVendorItems.map((vendor) => (
+                <View key={vendor.id} style={styles.lockedVendorRow}>
+                  <Text style={styles.lockedVendorName}>{vendor.name}</Text>
+                  <Text style={styles.lockedVendorCategory}>
+                    {vendor.category || "General"}
+                  </Text>
                 </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
+              ))
+            )}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredVendors}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.vendorList}
+            ListEmptyComponent={
+              !isLoading && !errorMessage ? (
+                <Text style={styles.emptyText}>No vendors available.</Text>
+              ) : null
+            }
+            renderItem={({ item }) => {
+              const isSelected = selected.includes(item.id);
+              const isFavorite = favoriteVendorIds.includes(item.id);
+
+              return (
+                <TouchableOpacity
+                  style={[styles.vendorCard, isSelected && styles.vendorCardSelected]}
+                  onPress={() => handleVendorTap(item.id)}
+                >
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => toggleFavoriteVendor(item.id)}
+                  >
+                    <Ionicons
+                      name={isFavorite ? "heart" : "heart-outline"}
+                      size={18}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                  </TouchableOpacity>
+
+                  <View style={styles.vendorRowContent}>
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.logoImage}
+                      />
+                    ) : (
+                      <View style={styles.logoPlaceholder} />
+                    )}
+
+                    <View style={styles.vendorMeta}>
+                      <Text style={styles.vendorName}>{item.name}</Text>
+                      <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
+                      {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
 
         <TouchableOpacity
           style={[
@@ -249,7 +289,7 @@ export default function VendorSelectionScreen() {
         >
           <Text style={styles.primaryButtonText}>
             {hasActiveSelection
-              ? "Continue to Play"
+              ? "Claim This Week Offer"
               : isSavingSelection
                 ? "Saving..."
                 : "Save & Continue"}
@@ -385,5 +425,30 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     paddingHorizontal: 12,
     paddingVertical: 11,
+  },
+  lockedCard: {
+    backgroundColor: Theme.colors.background_beige,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  lockedVendorRow: {
+    borderRadius: 10,
+    backgroundColor: Theme.colors.background_sand,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  lockedVendorName: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  lockedVendorCategory: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });
