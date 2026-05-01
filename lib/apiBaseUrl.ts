@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 
+const DEFAULT_API_URL = 'https://grysosta-backend.onrender.com/api';
 const DEFAULT_PORT = 5000;
 
 const stripTrailingSlashes = (value: string) => value.replace(/\/+$/, '');
@@ -45,8 +46,8 @@ const getExpoDevHostIp = (): string | null => {
  *
  * Priority:
  * 1) `process.env.EXPO_PUBLIC_API_URL`
- * 2) Expo dev host IP (same machine running Metro) + `:${DEFAULT_PORT}/api`
- * 3) `http://localhost:${DEFAULT_PORT}/api`
+ * 2) Expo dev host IP (same machine running Metro) + `:${DEFAULT_PORT}/api` when local API is explicitly enabled
+ * 3) Hosted Render backend
  */
 export const getApiBaseUrl = (): string => {
   const envValue = process.env.EXPO_PUBLIC_API_URL?.trim();
@@ -54,10 +55,12 @@ export const getApiBaseUrl = (): string => {
     return ensureApiSuffix(envValue);
   }
 
-  const devHostIp = getExpoDevHostIp();
-  if (devHostIp) {
-    return `http://${devHostIp}:${DEFAULT_PORT}/api`;
+  if (process.env.EXPO_PUBLIC_USE_LOCAL_API === 'true') {
+    const devHostIp = getExpoDevHostIp();
+    if (devHostIp) {
+      return `http://${devHostIp}:${DEFAULT_PORT}/api`;
+    }
   }
 
-  return `http://localhost:${DEFAULT_PORT}/api`;
+  return DEFAULT_API_URL;
 };

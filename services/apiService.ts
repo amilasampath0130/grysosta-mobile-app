@@ -1,6 +1,7 @@
 import { TokenStorage } from '@/utils/tokenStorage';
+import { getApiBaseUrl } from '@/lib/apiBaseUrl';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = getApiBaseUrl();
 
 interface ApiResponse<T = any> {
   success: boolean;

@@ -1,5 +1,6 @@
 import { SecureStorage } from '@/utils/secureStorage';
 import { API_CONFIG } from '@/config/config';
+import { getApiBaseUrl } from '@/lib/apiBaseUrl';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -55,15 +56,8 @@ class ApiService {
   private maxRetries: number;
 
   constructor() {
-    const envBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-    const fallbackBaseUrl = `${API_CONFIG.BASE_URL.replace(/\/$/, '')}/api`;
-    const resolvedEnvBaseUrl = envBaseUrl && envBaseUrl.length > 0 ? envBaseUrl : null;
-
-    this.baseURL = (resolvedEnvBaseUrl || fallbackBaseUrl).replace(/\/$/, '');
-    this.fallbackBaseURL =
-      resolvedEnvBaseUrl && resolvedEnvBaseUrl.replace(/\/$/, '') !== fallbackBaseUrl
-        ? fallbackBaseUrl
-        : null;
+    this.baseURL = getApiBaseUrl().replace(/\/$/, '');
+    this.fallbackBaseURL = null;
 
     const envTimeout = Number(process.env.EXPO_PUBLIC_REQUEST_TIMEOUT_MS);
     this.timeout = Number.isFinite(envTimeout) && envTimeout > 0

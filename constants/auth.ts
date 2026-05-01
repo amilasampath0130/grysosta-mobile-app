@@ -36,7 +36,7 @@ export const AUTH_CONSTANTS = {
   } as const,
 
   // API Configuration
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://grysosta-backend.onrender.com/api',
   TIMEOUT: 10000, // 10 seconds
 
   // App Constants

@@ -1,4 +1,4 @@
-const DEFAULT_BACKEND_ORIGIN = "http://localhost:5000";
+const DEFAULT_BACKEND_ORIGIN = "https://grysosta-backend.onrender.com";
 
 const envApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const derivedOrigin = envApiUrl

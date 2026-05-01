@@ -1,6 +1,7 @@
 import { apiService } from './apiService';
+import { getApiBaseUrl } from '@/lib/apiBaseUrl';
 
-const BACKEND_BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
+const BACKEND_BASE_URL = getApiBaseUrl().replace(/\/api\/?$/, '');
 
 export const testBackendConnection = async (): Promise<boolean> => {
   try {

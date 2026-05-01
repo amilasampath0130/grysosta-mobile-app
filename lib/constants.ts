@@ -1,5 +1,5 @@
 export const Constants = {
-  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://grysosta-backend.onrender.com/api',
   STORAGE_KEYS: {
     AUTH_STORAGE: 'auth-storage',
   },
