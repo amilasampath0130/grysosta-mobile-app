@@ -15,13 +15,20 @@ import { router } from "expo-router";
 import { Theme } from "@/theme";
 import { useGameplayStore } from "@/store/gameplayStore";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
+import { gameService } from "@/services/gameService";
+import { useAlert } from "@/contexts/AlertContext";
 
 export default function VendorSelectionScreen() {
+  const { showAlert } = useAlert();
   const [selected, setSelected] = useState<string[]>([]);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSavingSelection, setIsSavingSelection] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasActiveSelection, setHasActiveSelection] = useState<boolean>(false);
+  const [selectionExpiresAt, setSelectionExpiresAt] = useState<string | null>(null);
+
   const favoriteVendorIds = useGameplayStore(
     (state) => state.favoriteVendorIds,
   );
@@ -35,13 +42,27 @@ export default function VendorSelectionScreen() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadVendors = async () => {
+    const loadInitialData = async () => {
       try {
         setIsLoading(true);
         setErrorMessage(null);
-        const approved = await vendorService.getApprovedVendors();
+        const [approved, selectionStatus] = await Promise.all([
+          vendorService.getApprovedVendors(),
+          gameService.getVendorSelectionStatus(),
+        ]);
         if (cancelled) return;
+
         setVendors(approved);
+
+        if (selectionStatus.hasActiveSelection && selectionStatus.selection) {
+          setHasActiveSelection(true);
+          setSelectionExpiresAt(selectionStatus.selection.expiresAt);
+          setSelected(selectionStatus.selection.selectedVendors);
+          setSelectedVendors(selectionStatus.selection.selectedVendors);
+        } else {
+          setHasActiveSelection(false);
+          setSelectionExpiresAt(null);
+        }
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Failed to fetch vendors";
@@ -53,7 +74,7 @@ export default function VendorSelectionScreen() {
       }
     };
 
-    loadVendors();
+    loadInitialData();
 
     return () => {
       cancelled = true;
@@ -61,17 +82,34 @@ export default function VendorSelectionScreen() {
   }, []);
 
   const selectedCount = selected.length;
-  const canContinue = selectedCount >= 3;
+  const canContinue = hasActiveSelection || selectedCount === 3;
+
+  const formattedExpiry = useMemo(() => {
+    if (!selectionExpiresAt) return "";
+    return new Date(selectionExpiresAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }, [selectionExpiresAt]);
 
   const instructionText = useMemo(() => {
+    if (hasActiveSelection) {
+      return `Selection locked until ${formattedExpiry}.`;
+    }
+
     if (selectedCount >= 3) {
-      return "Great! Tap Continue to Play.";
+      return "Great! Tap Save & Continue.";
     }
 
     return `Select ${3 - selectedCount} more vendor${3 - selectedCount === 1 ? "" : "s"} to continue.`;
-  }, [selectedCount]);
+  }, [formattedExpiry, hasActiveSelection, selectedCount]);
 
   const handleVendorTap = (vendorId: string) => {
+    if (hasActiveSelection) {
+      return;
+    }
+
     const exists = selected.includes(vendorId);
 
     if (exists) {
@@ -91,9 +129,46 @@ export default function VendorSelectionScreen() {
       return;
     }
 
-    setSelectedVendors(selected);
-    router.push("/(Game)/gameHome");
+    if (hasActiveSelection) {
+      router.push("/(Game)/gameHome");
+      return;
+    }
+
+    void saveSelectionAndContinue();
   };
+
+  const saveSelectionAndContinue = async () => {
+    try {
+      setIsSavingSelection(true);
+      const response = await gameService.saveVendorSelection(selected);
+      setSelectedVendors(response.selection.selectedVendors);
+      setHasActiveSelection(true);
+      setSelectionExpiresAt(response.selection.expiresAt);
+      router.push("/(Game)/gameHome");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save vendor selection";
+
+      if (/locked until current cycle expires/i.test(message)) {
+        const latest = await gameService.getVendorSelectionStatus();
+        if (latest.hasActiveSelection && latest.selection) {
+          setHasActiveSelection(true);
+          setSelectionExpiresAt(latest.selection.expiresAt);
+          setSelected(latest.selection.selectedVendors);
+          setSelectedVendors(latest.selection.selectedVendors);
+        }
+      }
+
+      showAlert({
+        title: "Selection Failed",
+        message,
+        type: "error",
+      });
+    } finally {
+      setIsSavingSelection(false);
+    }
+  };
+
   const filteredVendors = useMemo(() => {
     const trimmedQuery = searchQuery.trim().toLowerCase();
     if (!trimmedQuery) return vendors;
@@ -103,18 +178,29 @@ export default function VendorSelectionScreen() {
       return searchableText.includes(trimmedQuery);
     });
   }, [searchQuery, vendors]);
+
+  const selectedVendorItems = useMemo(
+    () => vendors.filter((vendor) => selected.includes(vendor.id)),
+    [selected, vendors],
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Select 3 Vendors to Play</Text>
+        <Text style={styles.title}>
+          {hasActiveSelection ? "Selected Vendors" : "Select 3 Vendors to Play"}
+        </Text>
         <Text style={styles.subtitle}>{instructionText}</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search vendors by name or category"
-          placeholderTextColor={Theme.colors.text_earth}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+
+        {!hasActiveSelection && (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search vendors by name or category"
+            placeholderTextColor={Theme.colors.text_earth}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        )}
         {isLoading && (
           <View style={styles.statusRow}>
             <ActivityIndicator color={Theme.colors.accent_terracotta} />
@@ -126,65 +212,88 @@ export default function VendorSelectionScreen() {
           <Text style={styles.errorText}>{errorMessage}</Text>
         )}
 
-        <FlatList
-          data={filteredVendors}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.vendorList}
-          ListEmptyComponent={
-            !isLoading && !errorMessage ? (
-              <Text style={styles.emptyText}>No vendors available.</Text>
-            ) : null
-          }
-          renderItem={({ item }) => {
-            const isSelected = selected.includes(item.id);
-            const isFavorite = favoriteVendorIds.includes(item.id);
-
-            return (
-              <TouchableOpacity
-                style={[styles.vendorCard, isSelected && styles.vendorCardSelected]}
-                onPress={() => handleVendorTap(item.id)}
-              >
-                <TouchableOpacity
-                  style={styles.heartButton}
-                  onPress={() => toggleFavoriteVendor(item.id)}
-                >
-                  <Ionicons
-                    name={isFavorite ? "heart" : "heart-outline"}
-                    size={18}
-                    color={Theme.colors.accent_terracotta}
-                  />
-                </TouchableOpacity>
-
-                <View style={styles.vendorRowContent}>
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.logoImage}
-                    />
-                  ) : (
-                    <View style={styles.logoPlaceholder} />
-                  )}
-
-                  <View style={styles.vendorMeta}>
-                    <Text style={styles.vendorName}>{item.name}</Text>
-                    <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
-                    {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
-                  </View>
+        {hasActiveSelection ? (
+          <View style={styles.lockedCard}>
+            {selectedVendorItems.length === 0 ? (
+              <Text style={styles.emptyText}>Your selected vendors are active.</Text>
+            ) : (
+              selectedVendorItems.map((vendor) => (
+                <View key={vendor.id} style={styles.lockedVendorRow}>
+                  <Text style={styles.lockedVendorName}>{vendor.name}</Text>
+                  <Text style={styles.lockedVendorCategory}>
+                    {vendor.category || "General"}
+                  </Text>
                 </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
+              ))
+            )}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredVendors}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.vendorList}
+            ListEmptyComponent={
+              !isLoading && !errorMessage ? (
+                <Text style={styles.emptyText}>No vendors available.</Text>
+              ) : null
+            }
+            renderItem={({ item }) => {
+              const isSelected = selected.includes(item.id);
+              const isFavorite = favoriteVendorIds.includes(item.id);
+
+              return (
+                <TouchableOpacity
+                  style={[styles.vendorCard, isSelected && styles.vendorCardSelected]}
+                  onPress={() => handleVendorTap(item.id)}
+                >
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={() => toggleFavoriteVendor(item.id)}
+                  >
+                    <Ionicons
+                      name={isFavorite ? "heart" : "heart-outline"}
+                      size={18}
+                      color={Theme.colors.accent_terracotta}
+                    />
+                  </TouchableOpacity>
+
+                  <View style={styles.vendorRowContent}>
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.logoImage}
+                      />
+                    ) : (
+                      <View style={styles.logoPlaceholder} />
+                    )}
+
+                    <View style={styles.vendorMeta}>
+                      <Text style={styles.vendorName}>{item.name}</Text>
+                      <Text style={styles.vendorCategory}>{item.category || "General"}</Text>
+                      {isSelected && <Text style={styles.selectedLabel}>Selected</Text>}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
 
         <TouchableOpacity
           style={[
             styles.primaryButton,
-            !canContinue && styles.primaryButtonDisabled,
+            (!canContinue || isSavingSelection) && styles.primaryButtonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={!canContinue}
+          disabled={!canContinue || isSavingSelection}
         >
-          <Text style={styles.primaryButtonText}>Continue to Play</Text>
+          <Text style={styles.primaryButtonText}>
+            {hasActiveSelection
+              ? "Claim This Week Offer"
+              : isSavingSelection
+                ? "Saving..."
+                : "Save & Continue"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -316,5 +425,30 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     paddingHorizontal: 12,
     paddingVertical: 11,
+  },
+  lockedCard: {
+    backgroundColor: Theme.colors.background_beige,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  lockedVendorRow: {
+    borderRadius: 10,
+    backgroundColor: Theme.colors.background_sand,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  lockedVendorName: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  lockedVendorCategory: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

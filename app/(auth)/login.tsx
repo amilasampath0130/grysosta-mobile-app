@@ -57,7 +57,7 @@ export default function Login() {
             : "Unable to login right now. Please try again.",
         type: "error",
       });
-      console.error("Login error:", error);
+      // console.error("Login error:", error);
     }
   };
 

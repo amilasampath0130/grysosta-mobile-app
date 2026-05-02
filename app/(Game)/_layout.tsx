@@ -45,6 +45,14 @@ export default function GameLayout() {
           headerTitleAlign: "center",
         }}
       />
+      <Stack.Screen
+        name="coupon"
+        options={{
+          headerShown: true,
+          title: "Coupon",
+          headerTitleAlign: "center",
+        }}
+      />
     </Stack>
   );
 }
