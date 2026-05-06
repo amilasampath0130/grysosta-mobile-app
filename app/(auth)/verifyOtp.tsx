@@ -12,8 +12,11 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useLocalSearchParams, router } from "expo-router";
 import { Theme } from "@/theme";
 import { useAlert } from "@/contexts/AlertContext";
+import { useAuthStore } from "@/store/authStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { Constants } from "@/lib/constants";
+import { SecureStorage, safeSetItem } from "@/utils/secureStorage";
 
 const VerifyOtp = () => {
   const { email } = useLocalSearchParams<{ email?: string }>();
@@ -70,11 +73,32 @@ const VerifyOtp = () => {
       const data = await response.json();
       if (response.ok && data.success) {
         TokenStorage.setToken(data.data.token);
+        await Promise.all([
+          SecureStorage.setToken(data.data.token),
+          SecureStorage.setUser(data.data.user),
+          safeSetItem(
+            Constants.STORAGE_KEYS.PROFILE_MOONSHOT_PROMPT_PENDING,
+            "true",
+          ),
+        ]);
+        useAuthStore.setState({
+          user: data.data.user,
+          token: data.data.token,
+          refreshToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
         showAlert({
-          title: "Verified!",
-          message: "Your account is now active.",
+          title: "Welcome Reward Unlocked!",
+          message:
+            "You received 5 VACAY Coins for joining GRYSOSTA.\n\nVACAY Coins are earned through activity and rewards participation. Collect coins to unlock future redemption opportunities.",
           type: "success",
-          onConfirm: () => router.replace("/(tabs)/home"),
+          showCancel: true,
+          confirmText: "View My Coins",
+          cancelText: "Start Exploring",
+          onConfirm: () => router.replace("/(tabs)/coins"),
+          onCancel: () => router.replace("/(tabs)/home"),
         });
       } else {
         showAlert({

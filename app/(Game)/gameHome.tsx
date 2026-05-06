@@ -16,7 +16,7 @@ import { vendorService, type VendorListItem } from "@/services/vendorService";
 import { gameService, type TapCoinResponse } from "@/services/gameService";
 import { useAlert } from "@/contexts/AlertContext";
 
-const COINS = [1, 2, 3, 4, 5];
+const COINS = [1, 2, 3];
 
 type WonReward = NonNullable<TapCoinResponse["reward"]>;
 
@@ -44,7 +44,7 @@ export default function GameHome() {
       }
     };
 
-    loadVendors();
+    void loadVendors();
 
     return () => {
       cancelled = true;
@@ -182,10 +182,11 @@ export default function GameHome() {
               onPress={() => onSelectCoin(coin)}
               disabled={isTapping || isRedeeming || isSaving}
             >
-              <Image source={Images.logo} style={styles.coinLogo} />
+              <Image source={Images.logo} style={styles.coinLogo} resizeMode="contain" />
             </TouchableOpacity>
           ))}
         </View>
+
         {isTapping && <ActivityIndicator color={Theme.colors.accent_terracotta} />}
       </View>
 
@@ -259,24 +260,34 @@ const styles = StyleSheet.create({
   },
   coinRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  coinButton: {
-    width: 62,
-    height: 62,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 999,
+    marginTop: 16,
+    gap: 14,
+  },
+  coinButton: {
+    width: 92,
+    height: 112,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 22,
+    backgroundColor: Theme.colors.background_beige,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   coinSelected: {
     transform: [{ scale: 1.06 }],
     opacity: 0.92,
+    borderColor: Theme.colors.accent_terracotta,
   },
   coinLogo: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     resizeMode: "contain",
   },
   modalOverlay: {

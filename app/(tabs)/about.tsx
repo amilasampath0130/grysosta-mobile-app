@@ -31,13 +31,6 @@ const About = () => {
     { platform: "github", url: SOCIAL_LINKS.github, icon: "github" },
   ];
 
-  // Stats data using constants pattern
-  const STATS_DATA = {
-    users: "1k+",
-    rewards: "$100+",
-    games: "2+",
-  } as const;
-
   // Handler functions
   const handleSocialPress = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -200,10 +193,8 @@ const About = () => {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              © 2024 Grysosta. All rights reserved.
-            </Text>
-            <Text style={styles.footerVersion}>Version 1.0.0</Text>
+            <Text style={styles.footerText}>Copyright © 2026–2027 GRYSOSTA.</Text>
+            <Text style={styles.footerText}>All Rights Reserved.</Text>
           </View>
         </ScrollView>
       </View>

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,11 +12,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
-import { SecureStorage } from "@/utils/secureStorage";
+import {
+  SecureStorage,
+  safeDeleteItem,
+  safeGetItem,
+} from "@/utils/secureStorage";
 import { useAlert } from "@/contexts/AlertContext";
 import { useAuthStore } from "@/store/authStore";
-import { useGameplayStore } from "@/store/gameplayStore";
 import { getApiBaseUrl } from "@/lib/apiBaseUrl";
+import { Constants } from "@/lib/constants";
+import { gameService } from "@/services/gameService";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
 
 interface UserProfile {
@@ -50,18 +56,31 @@ const formatDateTime = (dateString?: string) => {
 export default function ProfileScreen() {
   const { showAlert } = useAlert();
   const logout = useAuthStore((state) => state.logout);
-  const selectedVendorIds = useGameplayStore((state) => state.selectedVendorIds);
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
+  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  const [selectionExpiresAt, setSelectionExpiresAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [hasCheckedMoonshotPrompt, setHasCheckedMoonshotPrompt] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     name: "",
     username: "",
     mobileNumber: "",
   });
+
+  const handleMoonshotPress = useCallback(() => {
+    Linking.openURL(Constants.EXTERNAL_URLS.MOONSHOT).catch((error) => {
+      console.error("Failed to open Moonshot URL:", error);
+      showAlert({
+        title: "Unable to Open Moonshot",
+        message: "Please try again later.",
+        type: "error",
+      });
+    });
+  }, [showAlert]);
 
   const getToken = async () => {
     const storeToken = useAuthStore.getState().token;
@@ -77,16 +96,28 @@ export default function ProfileScreen() {
 
     const loadVendors = async () => {
       try {
-        const approved = await vendorService.getApprovedVendors();
+        const [approved, selectionStatus] = await Promise.all([
+          vendorService.getApprovedVendors(),
+          gameService.getVendorSelectionStatus().catch(() => null),
+        ]);
         if (cancelled) {
           return;
         }
         setVendors(approved);
+        if (selectionStatus?.hasActiveSelection && selectionStatus.selection) {
+          setSelectedVendorIds(selectionStatus.selection.selectedVendors);
+          setSelectionExpiresAt(selectionStatus.selection.expiresAt);
+        } else {
+          setSelectedVendorIds([]);
+          setSelectionExpiresAt(null);
+        }
       } catch {
         if (cancelled) {
           return;
         }
         setVendors([]);
+        setSelectedVendorIds([]);
+        setSelectionExpiresAt(null);
       }
     };
 
@@ -124,7 +155,7 @@ export default function ProfileScreen() {
     return Math.round((completedCount / fields.length) * 100);
   }, [editedProfile.mobileNumber, editedProfile.name, editedProfile.username, user?.email]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -169,11 +200,62 @@ export default function ProfileScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showAlert]);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    void fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (isLoading || !user || hasCheckedMoonshotPrompt) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const maybeShowMoonshotPrompt = async () => {
+      try {
+        const isPending = await safeGetItem(
+          Constants.STORAGE_KEYS.PROFILE_MOONSHOT_PROMPT_PENDING,
+        );
+
+        if (!isMounted || isPending !== "true") {
+          if (isMounted) {
+            setHasCheckedMoonshotPrompt(true);
+          }
+          return;
+        }
+
+        await safeDeleteItem(Constants.STORAGE_KEYS.PROFILE_MOONSHOT_PROMPT_PENDING);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setHasCheckedMoonshotPrompt(true);
+        showAlert({
+          title: "Plan Your Trip Faster",
+          message:
+            "Want to build your VACAY balance faster?\n\nYou can buy additional VACAY Coins through Moonshot anytime to help reach your travel goal faster.\n\nThis is optional and not required.",
+          type: "info",
+          showCancel: true,
+          confirmText: "Buy on Moonshot",
+          cancelText: "Maybe Later",
+          onConfirm: handleMoonshotPress,
+        });
+      } catch {
+        if (isMounted) {
+          setHasCheckedMoonshotPrompt(true);
+        }
+      }
+    };
+
+    void maybeShowMoonshotPrompt();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [handleMoonshotPress, hasCheckedMoonshotPrompt, isLoading, showAlert, user]);
 
   const validateProfile = () => {
     if (!editedProfile.name.trim()) {
@@ -351,14 +433,17 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Profile Summary</Text>
           <Text style={styles.metaText}>Profile Completion: {profileCompletion}%</Text>
           <Text style={styles.metaText}>Selected Vendors: {selectedVendors.length}</Text>
+          <Text style={styles.metaText}>
+            Vendor Cycle: {selectionExpiresAt ? `Active until ${formatDateTime(selectionExpiresAt)}` : "No active selection"}
+          </Text>
           <Text style={styles.metaText}>Last Login: {formatDateTime(user?.lastLogin)}</Text>
           <Text style={styles.metaText}>Member Since: {formatDateTime(user?.createdAt)}</Text>
 
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => router.push("/(tabs)/myRewards")}
+            onPress={() => router.push("/(tabs)/coins")}
           >
-            <Text style={styles.primaryButtonText}>Go to My Rewards</Text>
+            <Text style={styles.primaryButtonText}>Go to My Coins</Text>
           </TouchableOpacity>
         </View>
 

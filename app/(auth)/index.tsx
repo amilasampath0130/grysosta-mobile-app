@@ -35,7 +35,7 @@ const Welcome = () => {
         easing: Easing.out(Easing.cubic),
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const handleSignIn = () => {
     router.push("/(auth)/login");
@@ -60,7 +60,7 @@ const Welcome = () => {
         >
           <Text style={styles.headerText}>GRYSOSTA</Text>
           <Text style={styles.headerSubtitle}>
-            Where every tap builds your legacy.
+            Where Loyalty Rewards You™
           </Text>
         </Animated.View>
 
@@ -75,7 +75,7 @@ const Welcome = () => {
           ]}
         >
           <Image
-            source={Images.signuplogo}//please change this to the correct logo image
+            source={Images.logo}//please change this to the correct logo image
             style={styles.image}
             resizeMode="contain"
           />
@@ -91,9 +91,9 @@ const Welcome = () => {
             },
           ]}
         >
-          <Text style={styles.bodyText1}>Secure Your Future</Text>
+          <Text style={styles.bodyText1}>Save More. Earn More.</Text>
           <Text style={styles.bodyText2}>
-            Build, manage, Win, and grow your wealth with confidence
+            Unlock discounts, coupons, and rewards from local businesses.
           </Text>
         </Animated.View>
 
@@ -122,6 +122,19 @@ const Welcome = () => {
           >
             <Text style={styles.secondaryButtonText}>CREATE ACCOUNT</Text>
           </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.footerContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.footerText}>Copyright © 2026–2027 GRYSOSTA.</Text>
+          <Text style={styles.footerText}>All Rights Reserved.</Text>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -167,8 +180,8 @@ const styles = StyleSheet.create({
     marginVertical: height * 0.02,
   },
   image: {
-    width: width * 0.4,
-    height: width * 0.4,
+    width: width * 0.6,
+    height: width * 0.6,
   },
   bodyTextContainer: {
     flex: 1.5,
@@ -228,5 +241,17 @@ const styles = StyleSheet.create({
     color: Theme.colors.accent_terracotta,
     letterSpacing: 0.5,
     fontWeight: "bold",
+  },
+  footerContainer: {
+    alignItems: "center",
+    marginTop: 12,
+    paddingBottom: height * 0.01,
+  },
+  footerText: {
+    color: Theme.colors.text_brown_gray,
+    fontFamily: Theme.fonts.medium,
+    fontSize: width * 0.031,
+    lineHeight: 18,
+    textAlign: "center",
   },
 });

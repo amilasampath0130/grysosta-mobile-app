@@ -73,7 +73,7 @@ export default function Login() {
         <View style={styles.container}>
           {/* Email Input */}
           <Image 
-            source={Images.signuplogo}//please change this to the correct logo image
+            source={Images.logo}
             style={styles.image}
             resizeMode="contain" 
           />
@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.background_cream,
   },
   image: {
-    width: width * 0.4,
-    height: width * 0.4,
+    width: width * 0.6,
+    height: width * 0.6,
   },
   container: {
     flex: 1,

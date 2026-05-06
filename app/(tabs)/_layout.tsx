@@ -32,9 +32,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="coins"
+        options={{
+          title: "Coins",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="logo-bitcoin" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="myRewards"
         options={{
-          title: "My Rewards",
+          title: "Rewards",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="gift-outline" size={size} color={color} />
           ),

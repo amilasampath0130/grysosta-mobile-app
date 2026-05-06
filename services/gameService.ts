@@ -128,9 +128,57 @@ export interface CouponsResponse {
   coupons: CouponListItem[];
 }
 
+export interface CoinSummary {
+  balance: number;
+  lifetimeCoins: number;
+  ticketsEarned: number;
+  progress: {
+    current: number;
+    target: number;
+    remaining: number;
+  };
+  dailyTap: {
+    canTap: boolean;
+    lastTapTime: string | null;
+    nextAvailableAt: string | null;
+  };
+  lastClaim: {
+    claimedAt: string;
+    coinsWon: number;
+    selectedCoin: number | null;
+    ticketsAwarded: number;
+  } | null;
+}
+
+export interface CoinStatusResponse {
+  success: boolean;
+  message?: string;
+  summary: CoinSummary;
+}
+
+export interface ClaimDailyCoinsResponse {
+  success: boolean;
+  message: string;
+  code?: string;
+  selectedCoin?: number;
+  coinsWon?: number;
+  ticketsAwarded?: number;
+  summary: CoinSummary;
+}
+
 class GameService {
   async getVendorSelectionStatus(): Promise<SelectionStatusResponse> {
     return apiService.get<SelectionStatusResponse>("/game/vendor-selection");
+  }
+
+  async getCoinStatus(): Promise<CoinStatusResponse> {
+    return apiService.get<CoinStatusResponse>("/game/coins");
+  }
+
+  async claimDailyCoins(selectedCoin: number): Promise<ClaimDailyCoinsResponse> {
+    return apiService.post<ClaimDailyCoinsResponse>("/game/coins/claim", {
+      selectedCoin,
+    });
   }
 
   async saveVendorSelection(
