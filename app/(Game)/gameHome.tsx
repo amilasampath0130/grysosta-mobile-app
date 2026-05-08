@@ -328,10 +328,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Theme.colors.background_sand,
+    // width: 28,
+    // height: 28,
+    // borderRadius: 14,
+    // backgroundColor: Theme.colors.background_sand,
   },
   rewardVendor: {
     color: Theme.colors.text_charcoal,

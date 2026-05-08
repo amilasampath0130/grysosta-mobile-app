@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -54,7 +60,9 @@ const HomeScreen: React.FC = () => {
   const [isAdsLoading, setIsAdsLoading] = useState<boolean>(true);
   const [activeAdIndex, setActiveAdIndex] = useState<number>(0);
   const [adsError, setAdsError] = useState<string | null>(null);
-  const [selectedAd, setSelectedAd] = useState<PublicAdvertisementItem | null>(null);
+  const [selectedAd, setSelectedAd] = useState<PublicAdvertisementItem | null>(
+    null,
+  );
 
   const adsListRef = useRef<FlatList<PublicAdvertisementItem>>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -76,7 +84,9 @@ const HomeScreen: React.FC = () => {
     } catch (error) {
       setAds([]);
       setAdsError(
-        error instanceof Error ? error.message : "Failed to load advertisements",
+        error instanceof Error
+          ? error.message
+          : "Failed to load advertisements",
       );
     } finally {
       setIsAdsLoading(false);
@@ -171,7 +181,11 @@ const HomeScreen: React.FC = () => {
         style={styles.adCard}
         onPress={() => setSelectedAd(item)}
       >
-        <Image source={{ uri: item.imageUrl }} style={styles.adImage} resizeMode="cover" />
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={styles.adImage}
+          resizeMode="cover"
+        />
         <View style={styles.adOverlay}>
           <Text style={styles.adVendor}>{item.vendorName}</Text>
           <Text style={styles.adTitle} numberOfLines={1}>
@@ -192,9 +206,13 @@ const HomeScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <Image style={styles.logoImage} source={Images.logo} />
+          <View style={styles.headerContainer}>
+            <View style={styles.logoContainer}>
+              <Image
+                style={styles.logoImage}
+                source={Images.logo}
+                resizeMode="contain"
+              />
             </View>
             <View style={styles.textContainer}>
               <Text style={styles.headerTitle}>GRYSOSTA</Text>
@@ -284,7 +302,10 @@ const HomeScreen: React.FC = () => {
                 {adsError || "No active advertisements right now."}
               </Text>
               {adsError && (
-                <TouchableOpacity style={styles.retryButton} onPress={() => void loadAds()}>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() => void loadAds()}
+                >
                   <Text style={styles.retryButtonText}>Retry</Text>
                 </TouchableOpacity>
               )}
@@ -372,15 +393,24 @@ const HomeScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setSelectedAd(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setSelectedAd(null)}>
-          <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setSelectedAd(null)}
+        >
+          <Pressable
+            style={styles.modalCard}
+            onPress={(event) => event.stopPropagation()}
+          >
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScrollContent}
             >
               <View style={styles.modalHero}>
                 {selectedAd?.imageUrl ? (
-                  <Image source={{ uri: selectedAd.imageUrl }} style={styles.modalAdImage} />
+                  <Image
+                    source={{ uri: selectedAd.imageUrl }}
+                    style={styles.modalAdImage}
+                  />
                 ) : null}
 
                 <View style={styles.modalHeroShade} />
@@ -390,7 +420,11 @@ const HomeScreen: React.FC = () => {
                   onPress={() => setSelectedAd(null)}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="close" size={20} color={Colors.background_cream} />
+                  <Ionicons
+                    name="close"
+                    size={20}
+                    color={Colors.background_cream}
+                  />
                 </TouchableOpacity>
 
                 <View style={styles.vendorLogoShell}>
@@ -429,44 +463,74 @@ const HomeScreen: React.FC = () => {
                   </View>
                 </View>
 
-                <Text style={styles.modalAdVendor}>{selectedAd?.vendorName}</Text>
+                <Text style={styles.modalAdVendor}>
+                  {selectedAd?.vendorName}
+                </Text>
                 <Text style={styles.modalAdTitle}>{selectedAd?.title}</Text>
-                <Text style={styles.modalAdDescription}>{selectedAd?.content}</Text>
+                <Text style={styles.modalAdDescription}>
+                  {selectedAd?.content}
+                </Text>
 
                 <View style={styles.vendorSpotlightCard}>
-                  <Text style={styles.vendorSpotlightEyebrow}>Vendor Spotlight</Text>
+                  <Text style={styles.vendorSpotlightEyebrow}>
+                    Vendor Spotlight
+                  </Text>
                   <Text style={styles.vendorSpotlightTitle}>
-                    {formatVendorCategory(selectedAd?.vendorCategory)} experiences curated by {selectedAd?.vendorName}
+                    {formatVendorCategory(selectedAd?.vendorCategory)}{" "}
+                    experiences curated by {selectedAd?.vendorName}
                   </Text>
                   <Text style={styles.vendorSpotlightText}>
-                    Explore promotions, top-up rewards, and brand information before you continue to checkout.
+                    Explore promotions, top-up rewards, and brand information
+                    before you continue to checkout.
                   </Text>
                 </View>
 
                 <View style={styles.topUpInfoBox}>
                   <Text style={styles.topUpInfoTitle}>Top Up Information</Text>
-                  <Text style={styles.topUpInfoText}>1. Choose a top-up package that matches your goals.</Text>
-                  <Text style={styles.topUpInfoText}>2. Review bonus points and offer validity before purchase.</Text>
-                  <Text style={styles.topUpInfoText}>3. Confirm payment to unlock available rewards instantly.</Text>
+                  <Text style={styles.topUpInfoText}>
+                    1. Choose a top-up package that matches your goals.
+                  </Text>
+                  <Text style={styles.topUpInfoText}>
+                    2. Review bonus points and offer validity before purchase.
+                  </Text>
+                  <Text style={styles.topUpInfoText}>
+                    3. Confirm payment to unlock available rewards instantly.
+                  </Text>
                 </View>
 
                 <View style={styles.modalActionRow}>
                   <TouchableOpacity
-                    style={[styles.modalActionButton, styles.modalSecondaryButton]}
+                    style={[
+                      styles.modalActionButton,
+                      styles.modalSecondaryButton,
+                    ]}
                     onPress={() => setSelectedAd(null)}
                   >
-                    <Ionicons name="close-circle-outline" size={16} color={Colors.text_charcoal} />
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={16}
+                      color={Colors.text_charcoal}
+                    />
                     <Text style={styles.modalSecondaryButtonText}>Close</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalActionButton, styles.modalPrimaryButton]}
+                    style={[
+                      styles.modalActionButton,
+                      styles.modalPrimaryButton,
+                    ]}
                     onPress={() => {
                       setSelectedAd(null);
                       router.push("/(offers)/offersHome");
                     }}
                   >
-                    <Ionicons name="wallet-outline" size={16} color={Colors.background_cream} />
-                    <Text style={styles.modalPrimaryButtonText}>Open Top Up</Text>
+                    <Ionicons
+                      name="wallet-outline"
+                      size={16}
+                      color={Colors.background_cream}
+                    />
+                    <Text style={styles.modalPrimaryButtonText}>
+                      Open Top Up
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -505,25 +569,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  logoContainer: {
+  headerContainer: {
+
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-  },
-  logo: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.background_cream,
+    gap: 5,
+    alignSelf: "flex-start",
     justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.background_sand,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+  },
+
+  logoContainer: {
+    flexShrink: 0,
+      width: 60,
+      height: 60,
+      borderRadius: 20,
+      backgroundColor: Colors.background_sand,
+      justifyContent: "center",
+      alignItems: "center",
   },
   textContainer: {
     flexDirection: "column",
@@ -825,8 +887,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   logoImage: {
-    width: "82%",
-    height: "82%",
+    width: "100%",
+    height: "100%",
   },
   modalOverlay: {
     flex: 1,
