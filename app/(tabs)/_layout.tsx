@@ -1,8 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { Theme } from "@/theme";
-
 // ✅ ADD DEFAULT EXPORT
 export default function TabsLayout() {
   return (
@@ -36,8 +35,14 @@ export default function TabsLayout() {
         options={{
           title: "Coins",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="logo-bitcoin" size={size} color={color} />
+            <FontAwesome6 name="coins" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="coinPortfolio"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

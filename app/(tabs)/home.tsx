@@ -69,7 +69,11 @@ const HomeScreen: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     { label: "Offers", icon: "pricetag-sharp", route: "/(offers)/offersHome" },
-    { label: "Rewards", icon: "trophy-outline" },
+    {
+      label: "Rewards",
+      icon: "trophy-outline",
+      route: "/(tabs)/coinPortfolio",
+    },
     { label: "Wallet", icon: "wallet-outline" },
   ];
 
@@ -570,7 +574,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerContainer: {
-
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
@@ -580,12 +583,12 @@ const styles = StyleSheet.create({
 
   logoContainer: {
     flexShrink: 0,
-      width: 60,
-      height: 60,
-      borderRadius: 20,
-      backgroundColor: Colors.background_sand,
-      justifyContent: "center",
-      alignItems: "center",
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: Colors.background_sand,
+    justifyContent: "center",
+    alignItems: "center",
   },
   textContainer: {
     flexDirection: "column",

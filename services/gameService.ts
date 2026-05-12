@@ -3,6 +3,16 @@ import { apiService } from "./api";
 type RewardStatus = "won" | "saved" | "redeemed" | "expired";
 type CouponStatus = "active" | "used" | "expired";
 
+export interface CoinTypeItem {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  imageUrl: string;
+  progressTarget: number;
+  isActive: boolean;
+}
+
 export interface SelectionStatusResponse {
   success: boolean;
   hasActiveSelection: boolean;
@@ -128,32 +138,49 @@ export interface CouponsResponse {
   coupons: CouponListItem[];
 }
 
-export interface CoinSummary {
-  balance: number;
-  lifetimeCoins: number;
-  ticketsEarned: number;
-  progress: {
-    current: number;
-    target: number;
-    remaining: number;
-  };
+export interface CoinTapSummary {
   dailyTap: {
     canTap: boolean;
     lastTapTime: string | null;
     nextAvailableAt: string | null;
   };
+  featuredCoins: CoinTypeItem[];
   lastClaim: {
     claimedAt: string;
     coinsWon: number;
     selectedCoin: number | null;
     ticketsAwarded: number;
+    coinType: CoinTypeItem | null;
   } | null;
+}
+
+export interface CoinPortfolioItem {
+  coinType: CoinTypeItem;
+  balance: number;
+  lifetimeEarned: number;
+  lastClaimedAt: string | null;
+  progress: {
+    current: number;
+    target: number;
+    remaining: number;
+    percentage: number;
+  };
 }
 
 export interface CoinStatusResponse {
   success: boolean;
   message?: string;
-  summary: CoinSummary;
+  summary: CoinTapSummary;
+}
+
+export interface CoinPortfolioResponse {
+  success: boolean;
+  portfolio: {
+    ticketsEarned: number;
+    totalBalance: number;
+    totalLifetimeEarned: number;
+    coins: CoinPortfolioItem[];
+  };
 }
 
 export interface ClaimDailyCoinsResponse {
@@ -163,7 +190,8 @@ export interface ClaimDailyCoinsResponse {
   selectedCoin?: number;
   coinsWon?: number;
   ticketsAwarded?: number;
-  summary: CoinSummary;
+  awardedCoin?: CoinTypeItem;
+  summary: CoinTapSummary;
 }
 
 class GameService {
@@ -175,7 +203,13 @@ class GameService {
     return apiService.get<CoinStatusResponse>("/game/coins");
   }
 
-  async claimDailyCoins(selectedCoin: number): Promise<ClaimDailyCoinsResponse> {
+  async getCoinPortfolio(): Promise<CoinPortfolioResponse> {
+    return apiService.get<CoinPortfolioResponse>("/game/coins/portfolio");
+  }
+
+  async claimDailyCoins(
+    selectedCoin: number,
+  ): Promise<ClaimDailyCoinsResponse> {
     return apiService.post<ClaimDailyCoinsResponse>("/game/coins/claim", {
       selectedCoin,
     });
@@ -194,7 +228,9 @@ class GameService {
   }
 
   async saveReward(rewardId: string): Promise<SaveRewardResponse> {
-    return apiService.post<SaveRewardResponse>(`/game/rewards/${rewardId}/save`);
+    return apiService.post<SaveRewardResponse>(
+      `/game/rewards/${rewardId}/save`,
+    );
   }
 
   async redeemReward(rewardId: string): Promise<RedeemRewardResponse> {

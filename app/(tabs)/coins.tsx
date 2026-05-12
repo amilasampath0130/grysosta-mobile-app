@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,13 +11,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
+import { Images } from "@/assets/images/images";
 import {
   gameService,
   type ClaimDailyCoinsResponse,
-  type CoinSummary,
+  type CoinTapSummary,
 } from "@/services/gameService";
 import { useAlert } from "@/contexts/AlertContext";
 
@@ -41,35 +42,40 @@ const formatDateTime = (dateString?: string | null) => {
 
 export default function CoinsScreen() {
   const { showAlert } = useAlert();
-  const [summary, setSummary] = useState<CoinSummary | null>(null);
+  const [summary, setSummary] = useState<CoinTapSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
 
-  const loadStatus = useCallback(async (isPullRefresh = false) => {
-    try {
-      if (isPullRefresh) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
+  const loadStatus = useCallback(
+    async (isPullRefresh = false) => {
+      try {
+        if (isPullRefresh) {
+          setIsRefreshing(true);
+        } else {
+          setIsLoading(true);
+        }
 
-      const response = await gameService.getCoinStatus();
-      setSummary(response.summary);
-      setSelectedCoin(response.summary.lastClaim?.selectedCoin ?? null);
-    } catch (error) {
-      showAlert({
-        title: "VACAY Coins",
-        message:
-          error instanceof Error ? error.message : "Failed to load coin status",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [showAlert]);
+        const response = await gameService.getCoinStatus();
+        setSummary(response.summary);
+        setSelectedCoin(response.summary.lastClaim?.selectedCoin ?? null);
+      } catch (error) {
+        showAlert({
+          title: "VACAY Coins",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to load coin status",
+          type: "error",
+        });
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [showAlert],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -84,9 +90,8 @@ export default function CoinsScreen() {
 
     try {
       setIsClaiming(true);
-      const response: ClaimDailyCoinsResponse = await gameService.claimDailyCoins(
-        coinNumber,
-      );
+      const response: ClaimDailyCoinsResponse =
+        await gameService.claimDailyCoins(coinNumber);
       setSummary(response.summary);
       setSelectedCoin(response.selectedCoin ?? coinNumber);
 
@@ -111,24 +116,15 @@ export default function CoinsScreen() {
     }
   };
 
-  const progressWidth = useMemo(() => {
-    if (!summary) {
-      return "0%";
-    }
-
-    const percentage = Math.min(
-      100,
-      Math.round((summary.progress.current / summary.progress.target) * 100),
-    );
-    return `${percentage}%`;
-  }, [summary]);
-
   if (isLoading && !summary) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color={Theme.colors.accent_terracotta} />
-          <Text style={styles.loadingText}>Loading your VACAY Coins...</Text>
+          <ActivityIndicator
+            size="large"
+            color={Theme.colors.accent_terracotta}
+          />
+          <Text style={styles.loadingText}>Loading your daily touch...</Text>
         </View>
       </SafeAreaView>
     );
@@ -146,47 +142,32 @@ export default function CoinsScreen() {
           />
         }
       >
-        <Text style={styles.title}>VACAY Coins</Text>
+        <Text style={styles.title}>Daily Coin Touch</Text>
         <Text style={styles.subtitle}>
-          Pick 1 of 3 coins once per day to win a random 0 to 10 VACAY Coins.
+          Touch one token per day. The system will award a random active coin
+          stocked by vendors.
         </Text>
 
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Balance</Text>
-            <Text style={styles.summaryValue}>{summary?.balance ?? 0}</Text>
-            <Text style={styles.summaryHint}>Coins toward next ticket</Text>
+        <View style={styles.availableCard}>
+          <Text style={styles.sectionTitle}>Available Coins</Text>
+          <View style={styles.availableRow}>
+            {(summary?.featuredCoins || []).map((coin) => (
+              <View key={coin.id} style={styles.availableChip}>
+                <Image
+                  source={{ uri: coin.imageUrl }}
+                  style={styles.availableCoinImage}
+                />
+                <Text style={styles.availableCoinText}>{coin.name}</Text>
+              </View>
+            ))}
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Tickets</Text>
-            <Text style={styles.summaryValue}>{summary?.ticketsEarned ?? 0}</Text>
-            <Text style={styles.summaryHint}>Earn 1 ticket at 1000 coins</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Lifetime</Text>
-            <Text style={styles.summaryValue}>{summary?.lifetimeCoins ?? 0}</Text>
-            <Text style={styles.summaryHint}>Total VACAY Coins won</Text>
-          </View>
-        </View>
-
-        <View style={styles.progressCard}>
-          <Text style={styles.sectionTitle}>Ticket Progress</Text>
-          <Text style={styles.progressText}>
-            {summary?.progress.current ?? 0} / {summary?.progress.target ?? 1000} coins
-          </Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: progressWidth }]} />
-          </View>
-          <Text style={styles.progressHint}>
-            {summary?.progress.remaining ?? 1000} more coins until your next ticket.
-          </Text>
         </View>
 
         <View style={styles.claimCard}>
-          <Text style={styles.sectionTitle}>Daily Coin Pick</Text>
+          <Text style={styles.sectionTitle}>Tap A Coin</Text>
           <Text style={styles.claimHint}>
             {summary?.dailyTap.canTap
-              ? "Choose 1 coin below to reveal today’s VACAY reward."
+              ? "Choose one token below to reveal today’s random coin reward."
               : `You already claimed today. Come back after ${formatDateTime(summary?.dailyTap.nextAvailableAt)}.`}
           </Text>
 
@@ -200,18 +181,19 @@ export default function CoinsScreen() {
                   style={[
                     styles.coinButton,
                     isPicked && styles.coinButtonSelected,
-                    (!summary?.dailyTap.canTap || isClaiming) && styles.coinButtonDisabled,
+                    (!summary?.dailyTap.canTap || isClaiming) &&
+                      styles.coinButtonDisabled,
                   ]}
                   onPress={() => void onPickCoin(coinNumber)}
                   activeOpacity={0.9}
                   disabled={!summary?.dailyTap.canTap || isClaiming}
                 >
-                  <Ionicons
-                    name="logo-bitcoin"
-                    size={30}
-                    color={Theme.colors.background_beige}
+                  <Image
+                    source={Images.logo}
+                    style={styles.touchCoinImage}
+                    resizeMode="contain"
                   />
-                  <Text style={styles.coinButtonLabel}>Coin {coinNumber}</Text>
+                  <Text style={styles.coinButtonLabel}>Touch {coinNumber}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -220,8 +202,16 @@ export default function CoinsScreen() {
           {summary?.lastClaim ? (
             <View style={styles.resultBox}>
               <Text style={styles.resultTitle}>Today’s Result</Text>
+              {summary.lastClaim.coinType?.imageUrl ? (
+                <Image
+                  source={{ uri: summary.lastClaim.coinType.imageUrl }}
+                  style={styles.resultCoinImage}
+                />
+              ) : null}
               <Text style={styles.resultText}>
-                Picked Coin {summary.lastClaim.selectedCoin ?? "-"} and won +{summary.lastClaim.coinsWon} VACAY Coins.
+                Touch {summary.lastClaim.selectedCoin ?? "-"} awarded +
+                {summary.lastClaim.coinsWon}{" "}
+                {summary.lastClaim.coinType?.name || "coins"}.
               </Text>
               <Text style={styles.resultText}>
                 Claimed at {formatDateTime(summary.lastClaim.claimedAt)}
@@ -238,15 +228,15 @@ export default function CoinsScreen() {
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => router.push("/(tabs)/myRewards")}
+            onPress={() => router.push("/(tabs)/coinPortfolio")}
           >
-            <Text style={styles.primaryButtonText}>Open Rewards</Text>
+            <Text style={styles.primaryButtonText}>Open Coin Progress</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={() => router.push("/(Game)/vendorSelection")}
+            onPress={() => router.push("/(tabs)/myRewards")}
           >
-            <Text style={styles.secondaryButtonText}>Manage Vendors</Text>
+            <Text style={styles.secondaryButtonText}>My Rewards</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -311,7 +301,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
   },
-  progressCard: {
+  availableCard: {
     backgroundColor: Theme.colors.background_beige,
     borderRadius: 14,
     padding: 16,
@@ -319,30 +309,35 @@ const styles = StyleSheet.create({
     borderColor: Theme.colors.border,
     gap: 10,
   },
+  availableRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  availableChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: Theme.colors.background_cream,
+  },
+  availableCoinImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Theme.colors.background_beige,
+  },
+  availableCoinText: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   sectionTitle: {
     color: Theme.colors.text_charcoal,
     fontSize: 17,
     fontWeight: "700",
-  },
-  progressText: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  progressTrack: {
-    height: 12,
-    borderRadius: 999,
-    overflow: "hidden",
-    backgroundColor: Theme.colors.background_sand,
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: Theme.colors.accent_terracotta,
-    borderRadius: 999,
-  },
-  progressHint: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 13,
   },
   claimCard: {
     backgroundColor: Theme.colors.background_beige,
@@ -375,6 +370,11 @@ const styles = StyleSheet.create({
   coinButtonDisabled: {
     opacity: 0.65,
   },
+  touchCoinImage: {
+    width: 52,
+    height: 52,
+    marginBottom: 4,
+  },
   coinButtonLabel: {
     color: Theme.colors.background_beige,
     fontSize: 14,
@@ -385,6 +385,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 6,
+  },
+  resultCoinImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignSelf: "center",
+    backgroundColor: Theme.colors.background_beige,
   },
   resultTitle: {
     color: Theme.colors.text_charcoal,
