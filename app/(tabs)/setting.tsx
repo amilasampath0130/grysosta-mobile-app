@@ -6,9 +6,7 @@ import {
   View,
   Switch,
   TouchableOpacity,
-  Image,
   ScrollView,
-  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,13 +14,8 @@ import { Theme } from "@/theme";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useAlert } from "@/contexts/AlertContext";
-type Props = {
-  navigation?: any; // replace with typed navigation prop if you use TS navigation types
-};
 
-const Settings: React.FC<Props> = ({ navigation }) => {
-  const { width } = useWindowDimensions();
-  const avatarSize = Math.min(72, Math.floor(width * 0.16));
+const Settings: React.FC = () => {
   const { logout } = useAuth();
   const { showAlert } = useAlert();
 
@@ -51,8 +44,7 @@ const Settings: React.FC<Props> = ({ navigation }) => {
   };
 
   const onAbout = () => {
-    // navigate to your About screen (update route name as needed)
-    navigation?.navigate?.("AboutApp");
+    router.push("/(tabs)/about");
   };
 
   const onRate = () => {
