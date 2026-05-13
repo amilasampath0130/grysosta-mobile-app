@@ -8,8 +8,8 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import React, { useState } from "react";
-import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { Theme } from "@/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -18,15 +18,23 @@ import { useAlert } from "@/contexts/AlertContext";
 import { Images } from "@/assets/images/images";
 import { useAuth } from "@/hooks/useAuth";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 // ✅ ADD DEFAULT EXPORT
 export default function Login() {
+  const params = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { showAlert } = useAlert();
   const { login, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (typeof params.email === "string" && params.email.trim()) {
+      setEmail(params.email.trim());
+    }
+  }, [params.email]);
+
   const handleLogin = async () => {
     if (!email || !password) {
       showAlert({
@@ -72,10 +80,10 @@ export default function Login() {
       >
         <View style={styles.container}>
           {/* Email Input */}
-          <Image 
+          <Image
             source={Images.logo}
             style={styles.image}
-            resizeMode="contain" 
+            resizeMode="contain"
           />
           <View style={styles.TextInputContainer}>
             <Text style={styles.InputContainerText}>Email Address</Text>
@@ -135,7 +143,12 @@ export default function Login() {
           {/* Forgot Password */}
           <View style={styles.forgotPasswordContainer}>
             <TouchableOpacity
-              onPress={() => router.push("/(auth)/resetPassword")}
+              onPress={() =>
+                router.push({
+                  pathname: "/(auth)/resetPassword",
+                  params: email.trim() ? { email: email.trim() } : undefined,
+                })
+              }
               disabled={isLoading}
             >
               <Text style={styles.ForgotpswdText}>Forgot password?</Text>
