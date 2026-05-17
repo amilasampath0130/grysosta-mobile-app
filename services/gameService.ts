@@ -44,6 +44,7 @@ export interface TapCoinResponse {
   success: boolean;
   message: string;
   code?: string;
+  outcomeType?: "offer" | "coin";
   reward?: {
     id: string;
     status: RewardStatus;
@@ -57,6 +58,12 @@ export interface TapCoinResponse {
       bannerUrl: string;
       vendorName: string;
     };
+  };
+  coinWin?: {
+    selectedCoin: number | null;
+    coinsWon: number;
+    ticketsAwarded: number;
+    awardedCoin: CoinTypeItem;
   };
   cooldown?: {
     msLeft: number;
@@ -223,8 +230,10 @@ class GameService {
     });
   }
 
-  async tapCoin(): Promise<TapCoinResponse> {
-    return apiService.post<TapCoinResponse>("/game/tap");
+  async tapCoin(selectedCoin?: number): Promise<TapCoinResponse> {
+    return apiService.post<TapCoinResponse>("/game/tap", {
+      selectedCoin,
+    });
   }
 
   async saveReward(rewardId: string): Promise<SaveRewardResponse> {

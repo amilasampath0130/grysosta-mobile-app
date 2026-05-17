@@ -31,6 +31,140 @@ const COINS = [
 
 type WonReward = NonNullable<TapCoinResponse["reward"]>;
 
+type AnimatedLogoProps = {
+  style: object;
+  delay?: number;
+};
+
+function AnimatedCoinLogo({ style, delay = 0 }: AnimatedLogoProps) {
+  const animation = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [animation, delay]);
+
+  const animatedStyle = {
+    transform: [
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.06],
+        }),
+      },
+      {
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -3],
+        }),
+      },
+    ],
+  };
+
+  return (
+    <Animated.Image
+      source={Images.logo}
+      style={[style, animatedStyle]}
+      resizeMode="contain"
+    />
+  );
+}
+
+type AnimatedRingProps = {
+  color: string;
+  size: number;
+  borderRadius: number;
+  borderWidth: number;
+  delay?: number;
+  children: React.ReactNode;
+};
+
+function AnimatedRing({
+  color,
+  size,
+  borderRadius,
+  borderWidth,
+  delay = 0,
+  children,
+}: AnimatedRingProps) {
+  const glow = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, {
+          toValue: 1,
+          duration: 1400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay,
+        }),
+        Animated.timing(glow, {
+          toValue: 0,
+          duration: 1400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [glow, delay]);
+
+  const animatedRingStyle = {
+    opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }),
+    transform: [
+      {
+        scale: glow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }),
+      },
+    ],
+  };
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius,
+          borderWidth,
+          borderColor: color,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        animatedRingStyle,
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function GameHome() {
   const { showAlert } = useAlert();
 
@@ -82,7 +216,7 @@ export default function GameHome() {
       return "Reward revealed. Choose an action below.";
     }
 
-    return "Select 1 Coin to Reveal Your Reward";
+    return "Select 1 coin to reveal either an offer or coin reward";
   }, [cooldownText, hasPlayed, isTapping]);
 
   const onSelectCoin = (coinIndex: number) => {
@@ -98,14 +232,37 @@ export default function GameHome() {
       setIsTapping(true);
       setCooldownText(null);
 
-      const response = await gameService.tapCoin();
+      const response = await gameService.tapCoin(coinIndex);
 
-      if (!response.success || !response.reward) {
+      if (!response.success) {
         throw new Error(response.message || "Unable to play now");
       }
 
       setSelectedCoin(coinIndex);
-      setRevealedReward(response.reward);
+
+      if (response.outcomeType === "offer" && response.reward) {
+        setRevealedReward(response.reward);
+        return;
+      }
+
+      if (response.outcomeType === "coin" && response.coinWin) {
+        const won = response.coinWin.coinsWon;
+        const coinName = response.coinWin.awardedCoin?.name || "coins";
+
+        showAlert({
+          title: won > 0 ? "Coin Reward" : "No Coin Reward",
+          message:
+            won > 0
+              ? `You won ${won} ${coinName}. Check your Coin Portfolio for updates.`
+              : "No coin reward this round. Try again tomorrow.",
+          type: won > 0 ? "success" : "warning",
+        });
+
+        router.replace("/(tabs)/coins");
+        return;
+      }
+
+      throw new Error(response.message || "Unable to reveal reward");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to play now";
@@ -190,68 +347,79 @@ export default function GameHome() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Select 1 Coin to Reveal Your Reward</Text>
+        <Text style={styles.title}>
+          Select 1 Coin To Reveal Offer Or Coin Reward
+        </Text>
 
         <Text style={styles.subtitle}>{instructionText}</Text>
 
         {/* TOP ROW */}
         <View style={styles.row}>
           {COINS.slice(0, 3).map((coin) => (
-            <TouchableOpacity
+            <AnimatedRing
               key={coin.id}
-              onPress={() => onSelectCoin(coin.id)}
-              disabled={isTapping || isRedeeming || isSaving}
-              style={[
-                styles.coinButton,
-                {
-                  borderColor: coin.color,
-                },
-                selectedCoin === coin.id && styles.selectedCoin,
-              ]}
+              color={coin.color}
+              size={110}
+              borderRadius={60}
+              borderWidth={4}
+              delay={coin.id * 90}
             >
-              <AnimatedCoinLogo style={styles.coinLogo} delay={coin.id * 90} />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onSelectCoin(coin.id)}
+                disabled={isTapping || isRedeeming || isSaving}
+                style={styles.coinTouchable}
+              >
+                <AnimatedCoinLogo
+                  style={styles.coinLogo}
+                  delay={coin.id * 90}
+                />
+              </TouchableOpacity>
+            </AnimatedRing>
           ))}
         </View>
 
         {/* MIDDLE ROW */}
         <View style={styles.row}>
           {COINS.slice(3, 6).map((coin) => (
-            <TouchableOpacity
+            <AnimatedRing
               key={coin.id}
-              onPress={() => onSelectCoin(coin.id)}
-              disabled={isTapping || isRedeeming || isSaving}
-              style={[
-                coin.center ? styles.centerCoin : styles.coinButton,
-                {
-                  borderColor: coin.color,
-                },
-                selectedCoin === coin.id && styles.selectedCoin,
-              ]}
+              color={coin.color}
+              size={coin.center ? 135 : 110}
+              borderRadius={coin.center ? 70 : 60}
+              borderWidth={coin.center ? 5 : 4}
+              delay={coin.id * 90}
             >
-              <AnimatedCoinLogo
-                style={coin.center ? styles.centerCoinLogo : styles.coinLogo}
-                delay={coin.id * 90}
-              />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onSelectCoin(coin.id)}
+                disabled={isTapping || isRedeeming || isSaving}
+                style={styles.coinTouchable}
+              >
+                <AnimatedCoinLogo
+                  style={coin.center ? styles.centerCoinLogo : styles.coinLogo}
+                  delay={coin.id * 90}
+                />
+              </TouchableOpacity>
+            </AnimatedRing>
           ))}
         </View>
 
         {/* BOTTOM ROW */}
         <View style={styles.bottomRow}>
-          <TouchableOpacity
-            onPress={() => onSelectCoin(7)}
-            disabled={isTapping || isRedeeming || isSaving}
-            style={[
-              styles.coinButton,
-              {
-                borderColor: "#00E5FF",
-              },
-              selectedCoin === 7 && styles.selectedCoin,
-            ]}
+          <AnimatedRing
+            color="#00E5FF"
+            size={110}
+            borderRadius={60}
+            borderWidth={4}
+            delay={7 * 90}
           >
-            <AnimatedCoinLogo style={styles.coinLogo} delay={7 * 90} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onSelectCoin(7)}
+              disabled={isTapping || isRedeeming || isSaving}
+              style={styles.coinTouchable}
+            >
+              <AnimatedCoinLogo style={styles.coinLogo} delay={7 * 90} />
+            </TouchableOpacity>
+          </AnimatedRing>
         </View>
 
         {isTapping && (
@@ -358,29 +526,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  coinButton: {
-    width: 110,
-    height: 110,
-    borderRadius: 60,
-    backgroundColor: "transparent",
+  coinTouchable: {
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 4,
-  },
-
-  centerCoin: {
-    width: 135,
-    height: 135,
-    borderRadius: 70,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 5,
-  },
-
-  selectedCoin: {
-    transform: [{ scale: 1.05 }],
-    opacity: 0.9,
   },
 
   coinLogo: {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -13,15 +13,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { Theme } from "@/theme";
-import { Images } from "@/assets/images/images";
 import {
   gameService,
-  type ClaimDailyCoinsResponse,
+  type CoinPortfolioResponse,
   type CoinTapSummary,
 } from "@/services/gameService";
 import { useAlert } from "@/contexts/AlertContext";
-
-const COIN_OPTIONS = [1, 2, 3] as const;
 
 const formatDateTime = (dateString?: string | null) => {
   if (!dateString) {
@@ -42,11 +39,12 @@ const formatDateTime = (dateString?: string | null) => {
 
 export default function CoinsScreen() {
   const { showAlert } = useAlert();
+  const [portfolio, setPortfolio] = useState<
+    CoinPortfolioResponse["portfolio"] | null
+  >(null);
   const [summary, setSummary] = useState<CoinTapSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isClaiming, setIsClaiming] = useState(false);
-  const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
 
   const loadStatus = useCallback(
     async (isPullRefresh = false) => {
@@ -57,16 +55,20 @@ export default function CoinsScreen() {
           setIsLoading(true);
         }
 
-        const response = await gameService.getCoinStatus();
-        setSummary(response.summary);
-        setSelectedCoin(response.summary.lastClaim?.selectedCoin ?? null);
+        const [portfolioResponse, summaryResponse] = await Promise.all([
+          gameService.getCoinPortfolio(),
+          gameService.getCoinStatus(),
+        ]);
+
+        setPortfolio(portfolioResponse.portfolio);
+        setSummary(summaryResponse.summary);
       } catch (error) {
         showAlert({
-          title: "VACAY Coins",
+          title: "Coin Portfolio",
           message:
             error instanceof Error
               ? error.message
-              : "Failed to load coin status",
+              : "Failed to load coin portfolio",
           type: "error",
         });
       } finally {
@@ -83,40 +85,12 @@ export default function CoinsScreen() {
     }, [loadStatus]),
   );
 
-  const onPickCoin = async (coinNumber: number) => {
-    if (!summary?.dailyTap.canTap || isClaiming) {
-      return;
-    }
+  const totalCoinsReceived = useMemo(
+    () => portfolio?.totalLifetimeEarned ?? 0,
+    [portfolio],
+  );
 
-    try {
-      setIsClaiming(true);
-      const response: ClaimDailyCoinsResponse =
-        await gameService.claimDailyCoins(coinNumber);
-      setSummary(response.summary);
-      setSelectedCoin(response.selectedCoin ?? coinNumber);
-
-      showAlert({
-        title: "Coins Added",
-        message: response.message,
-        type: "success",
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to claim daily coins";
-
-      showAlert({
-        title: "Daily Claim",
-        message,
-        type: "warning",
-      });
-
-      await loadStatus();
-    } finally {
-      setIsClaiming(false);
-    }
-  };
-
-  if (isLoading && !summary) {
+  if (isLoading && !portfolio) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingState}>
@@ -124,7 +98,7 @@ export default function CoinsScreen() {
             size="large"
             color={Theme.colors.accent_terracotta}
           />
-          <Text style={styles.loadingText}>Loading your daily touch...</Text>
+          <Text style={styles.loadingText}>Loading your coin portfolio...</Text>
         </View>
       </SafeAreaView>
     );
@@ -142,103 +116,122 @@ export default function CoinsScreen() {
           />
         }
       >
-        <Text style={styles.title}>Daily Coin Touch</Text>
+        <Text style={styles.title}>Coin Portfolio</Text>
         <Text style={styles.subtitle}>
-          Touch one token per day. The system will award a random active coin
-          stocked by vendors.
+          Track your progress across the GRYSOSTA coin ecosystem.
         </Text>
 
-        <View style={styles.availableCard}>
-          <Text style={styles.sectionTitle}>Available Coins</Text>
-          <View style={styles.availableRow}>
-            {(summary?.featuredCoins || []).map((coin) => (
-              <View key={coin.id} style={styles.availableChip}>
-                <Image
-                  source={{ uri: coin.imageUrl }}
-                  style={styles.availableCoinImage}
-                />
-                <Text style={styles.availableCoinText}>{coin.name}</Text>
-              </View>
-            ))}
+        <View style={styles.aggregateCard}>
+          <View>
+            <Text style={styles.aggregateLabel}>TOTAL COINS RECEIVED</Text>
+            <Text style={styles.aggregateValue}>{totalCoinsReceived}</Text>
+            <Text style={styles.aggregateHint}>Across all GRYSOSTA coins</Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={() => {
+              showAlert({
+                title: "Coming Soon",
+                message: "Moonshot purchase flow will be available soon.",
+                type: "warning",
+              });
+            }}
+          >
+            <Text style={styles.buyButtonText}>Buy Coins</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.claimCard}>
-          <Text style={styles.sectionTitle}>Tap A Coin</Text>
-          <Text style={styles.claimHint}>
-            {summary?.dailyTap.canTap
-              ? "Choose one token below to reveal today’s random coin reward."
-              : `You already claimed today. Come back after ${formatDateTime(summary?.dailyTap.nextAvailableAt)}.`}
-          </Text>
-
-          <View style={styles.coinRow}>
-            {COIN_OPTIONS.map((coinNumber) => {
-              const isPicked = selectedCoin === coinNumber;
-
-              return (
-                <TouchableOpacity
-                  key={coinNumber}
-                  style={[
-                    styles.coinButton,
-                    isPicked && styles.coinButtonSelected,
-                    (!summary?.dailyTap.canTap || isClaiming) &&
-                      styles.coinButtonDisabled,
-                  ]}
-                  onPress={() => void onPickCoin(coinNumber)}
-                  activeOpacity={0.9}
-                  disabled={!summary?.dailyTap.canTap || isClaiming}
-                >
-                  <Image
-                    source={Images.logo}
-                    style={styles.touchCoinImage}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.coinButtonLabel}>Touch {coinNumber}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {summary?.lastClaim ? (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultTitle}>Today’s Result</Text>
-              {summary.lastClaim.coinType?.imageUrl ? (
+        <View style={styles.listSection}>
+          {(portfolio?.coins || []).map((item) => (
+            <View key={item.coinType.id} style={styles.coinCard}>
+              <View style={styles.coinHeader}>
                 <Image
-                  source={{ uri: summary.lastClaim.coinType.imageUrl }}
-                  style={styles.resultCoinImage}
+                  source={{ uri: item.coinType.imageUrl }}
+                  style={styles.coinImage}
                 />
-              ) : null}
-              <Text style={styles.resultText}>
-                Touch {summary.lastClaim.selectedCoin ?? "-"} awarded +
-                {summary.lastClaim.coinsWon}{" "}
-                {summary.lastClaim.coinType?.name || "coins"}.
-              </Text>
-              <Text style={styles.resultText}>
-                Claimed at {formatDateTime(summary.lastClaim.claimedAt)}
-              </Text>
-              {summary.lastClaim.ticketsAwarded > 0 ? (
-                <Text style={styles.ticketAwardText}>
-                  Ticket unlocked: +{summary.lastClaim.ticketsAwarded}
+
+                <View style={styles.coinMeta}>
+                  <Text style={styles.coinName}>{item.coinType.name}</Text>
+                  <Text style={styles.coinDescription} numberOfLines={2}>
+                    {item.coinType.description || "Earn and grow this coin."}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.smallBuyButton}
+                  onPress={() => {
+                    showAlert({
+                      title: "Coming Soon",
+                      message: "Moonshot purchase flow will be available soon.",
+                      type: "warning",
+                    });
+                  }}
+                >
+                  <Text style={styles.smallBuyButtonText}>Buy</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.metricRow}>
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>Balance</Text>
+                  <Text style={styles.metricValue}>{item.balance}</Text>
+                </View>
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>Earned (Lifetime)</Text>
+                  <Text style={styles.metricValue}>{item.lifetimeEarned}</Text>
+                </View>
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>Goal</Text>
+                  <Text style={styles.metricValue}>{item.progress.target}</Text>
+                </View>
+              </View>
+
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${Math.max(2, item.progress.percentage)}%` },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.progressFooter}>
+                <Text style={styles.progressText}>
+                  {item.progress.current} / {item.progress.target}
                 </Text>
-              ) : null}
+                <Text style={styles.progressText}>
+                  {item.progress.remaining} remaining
+                </Text>
+              </View>
+            </View>
+          ))}
+
+          {portfolio?.coins?.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>
+                No coin data yet. Play Daily Touch to start building your
+                portfolio.
+              </Text>
             </View>
           ) : null}
+
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Daily Touch Status</Text>
+            <Text style={styles.infoText}>
+              {summary?.dailyTap.canTap
+                ? "You can play now and win either an offer or coin reward."
+                : `You already played today. Next try: ${formatDateTime(summary?.dailyTap.nextAvailableAt)}`}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push("/(tabs)/coinPortfolio")}
-          >
-            <Text style={styles.primaryButtonText}>Open Coin Progress</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push("/(tabs)/myRewards")}
-          >
-            <Text style={styles.secondaryButtonText}>My Rewards</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.push("/(Game)/gameHome")}
+        >
+          <Text style={styles.primaryButtonText}>Go To Daily Touch</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -251,7 +244,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    gap: 14,
+    gap: 16,
     paddingBottom: 32,
   },
   loadingState: {
@@ -275,163 +268,165 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  summaryGrid: {
-    gap: 10,
-  },
-  summaryCard: {
-    backgroundColor: Theme.colors.background_beige,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  summaryLabel: {
-    color: Theme.colors.text_earth,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  summaryValue: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 28,
-    fontWeight: "800",
-    marginTop: 4,
-  },
-  summaryHint: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 13,
-    marginTop: 4,
-  },
-  availableCard: {
-    backgroundColor: Theme.colors.background_beige,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    gap: 10,
-  },
-  availableRow: {
+  aggregateCard: {
+    backgroundColor: "#0D4CCB",
+    borderRadius: 16,
+    padding: 18,
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  availableChip: {
-    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: Theme.colors.background_cream,
   },
-  availableCoinImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Theme.colors.background_beige,
-  },
-  availableCoinText: {
-    color: Theme.colors.text_charcoal,
+  aggregateLabel: {
+    color: "#CFE0FF",
     fontSize: 12,
     fontWeight: "700",
   },
-  sectionTitle: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 17,
+  aggregateValue: {
+    color: "#FFFFFF",
+    fontSize: 42,
+    fontWeight: "900",
+    lineHeight: 46,
+  },
+  aggregateHint: {
+    color: "#E6EEFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  buyButton: {
+    backgroundColor: "#18C93E",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+  },
+  buyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "700",
   },
-  claimCard: {
+  listSection: {
+    gap: 12,
+  },
+  coinCard: {
     backgroundColor: Theme.colors.background_beige,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: Theme.colors.border,
     gap: 14,
   },
-  claimHint: {
+  coinHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  coinImage: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: Theme.colors.background_cream,
+  },
+  coinMeta: {
+    flex: 1,
+    gap: 4,
+  },
+  coinName: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  coinDescription: {
     color: Theme.colors.text_brown_gray,
     fontSize: 14,
     lineHeight: 20,
   },
-  coinRow: {
-    flexDirection: "row",
-    gap: 10,
+  smallBuyButton: {
+    backgroundColor: "#18C93E",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  coinButton: {
-    flex: 1,
-    backgroundColor: Theme.colors.accent_terracotta,
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: "center",
-    gap: 8,
-  },
-  coinButtonSelected: {
-    backgroundColor: Theme.colors.accent_clay,
-  },
-  coinButtonDisabled: {
-    opacity: 0.65,
-  },
-  touchCoinImage: {
-    width: 52,
-    height: 52,
-    marginBottom: 4,
-  },
-  coinButtonLabel: {
-    color: Theme.colors.background_beige,
-    fontSize: 14,
+  smallBuyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "700",
   },
-  resultBox: {
+  metricRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  metricItem: {
+    flex: 1,
+  },
+  metricLabel: {
+    color: Theme.colors.text_earth,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  metricValue: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 34,
+    fontWeight: "800",
+    lineHeight: 38,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: Theme.colors.background_cream,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#0D4CCB",
+  },
+  progressFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  progressText: {
+    color: Theme.colors.text_charcoal,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyState: {
+    backgroundColor: Theme.colors.background_beige,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
+  },
+  emptyText: {
+    color: Theme.colors.text_brown_gray,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infoCard: {
     backgroundColor: Theme.colors.background_sand,
     borderRadius: 12,
     padding: 12,
-    gap: 6,
+    gap: 4,
   },
-  resultCoinImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignSelf: "center",
-    backgroundColor: Theme.colors.background_beige,
-  },
-  resultTitle: {
+  infoTitle: {
     color: Theme.colors.text_charcoal,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
-  resultText: {
+  infoText: {
     color: Theme.colors.text_brown_gray,
     fontSize: 13,
     lineHeight: 18,
   },
-  ticketAwardText: {
-    color: Theme.colors.success,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  actionRow: {
-    gap: 10,
-  },
   primaryButton: {
-    backgroundColor: Theme.colors.accent_terracotta,
+    marginTop: 6,
+    backgroundColor: "#0D4CCB",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   primaryButtonText: {
-    color: Theme.colors.background_beige,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  secondaryButton: {
-    backgroundColor: Theme.colors.background_beige,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  secondaryButtonText: {
-    color: Theme.colors.text_charcoal,
+    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",
   },
