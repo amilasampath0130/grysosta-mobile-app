@@ -31,66 +31,6 @@ const COINS = [
 
 type WonReward = NonNullable<TapCoinResponse["reward"]>;
 
-type AnimatedLogoProps = {
-  style: object;
-  delay?: number;
-};
-
-function AnimatedCoinLogo({ style, delay = 0 }: AnimatedLogoProps) {
-  const animation = React.useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animation, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-          delay,
-        }),
-        Animated.timing(animation, {
-          toValue: 0,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    loop.start();
-
-    return () => {
-      loop.stop();
-    };
-  }, [animation, delay]);
-
-  const animatedStyle = {
-    transform: [
-      {
-        scale: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 1.06],
-        }),
-      },
-      {
-        translateY: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -3],
-        }),
-      },
-    ],
-  };
-
-  return (
-    <Animated.Image
-      source={Images.logo}
-      style={[style, animatedStyle]}
-      resizeMode="contain"
-    />
-  );
-}
-
 export default function GameHome() {
   const { showAlert } = useAlert();
 
