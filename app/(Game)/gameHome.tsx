@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Image,
   Modal,
   StyleSheet,
@@ -10,24 +12,96 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { Theme } from "@/theme";
 import { Images } from "@/assets/images/images";
 import { vendorService, type VendorListItem } from "@/services/vendorService";
 import { gameService, type TapCoinResponse } from "@/services/gameService";
 import { useAlert } from "@/contexts/AlertContext";
 
-const COINS = [1, 2, 3];
+const COINS = [
+  { id: 1, color: "#FF8C00" },
+  { id: 2, color: "#FF3B30" },
+  { id: 3, color: "#A020F0" },
+  { id: 4, color: "#32CD32" },
+  { id: 5, color: "#FFD700", center: true },
+  { id: 6, color: "#1E90FF" },
+  { id: 7, color: "#00E5FF" },
+];
 
 type WonReward = NonNullable<TapCoinResponse["reward"]>;
 
+type AnimatedLogoProps = {
+  style: object;
+  delay?: number;
+};
+
+function AnimatedCoinLogo({ style, delay = 0 }: AnimatedLogoProps) {
+  const animation = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [animation, delay]);
+
+  const animatedStyle = {
+    transform: [
+      {
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.06],
+        }),
+      },
+      {
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -3],
+        }),
+      },
+    ],
+  };
+
+  return (
+    <Animated.Image
+      source={Images.logo}
+      style={[style, animatedStyle]}
+      resizeMode="contain"
+    />
+  );
+}
+
 export default function GameHome() {
   const { showAlert } = useAlert();
+
   const [selectedCoin, setSelectedCoin] = useState<number | null>(null);
   const [revealedReward, setRevealedReward] = useState<WonReward | null>(null);
   const [cooldownText, setCooldownText] = useState<string | null>(null);
+
   const [isTapping, setIsTapping] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
   const [vendors, setVendors] = useState<VendorListItem[]>([]);
 
   useEffect(() => {
@@ -36,7 +110,9 @@ export default function GameHome() {
     const loadVendors = async () => {
       try {
         const approved = await vendorService.getApprovedVendors();
+
         if (cancelled) return;
+
         setVendors(approved);
       } catch {
         if (cancelled) return;
@@ -81,7 +157,9 @@ export default function GameHome() {
     try {
       setIsTapping(true);
       setCooldownText(null);
+
       const response = await gameService.tapCoin();
+
       if (!response.success || !response.reward) {
         throw new Error(response.message || "Unable to play now");
       }
@@ -89,11 +167,14 @@ export default function GameHome() {
       setSelectedCoin(coinIndex);
       setRevealedReward(response.reward);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to play now";
+      const message =
+        error instanceof Error ? error.message : "Unable to play now";
+
       if (/tap again in/i.test(message)) {
         const cooldown = message.replace(/.*tap again in\s*/i, "").trim();
         setCooldownText(cooldown);
       }
+
       showAlert({
         title: "Coin Tap",
         message,
@@ -105,18 +186,19 @@ export default function GameHome() {
   };
 
   const handleSaveForLater = async () => {
-    if (!revealedReward) {
-      return;
-    }
+    if (!revealedReward) return;
 
     try {
       setIsSaving(true);
+
       const response = await gameService.saveReward(revealedReward.id);
+
       if (!response.success) {
         throw new Error(response.message || "Failed to save reward");
       }
 
       setRevealedReward(null);
+
       router.replace("/(tabs)/myRewards");
     } catch (error) {
       showAlert({
@@ -131,18 +213,19 @@ export default function GameHome() {
   };
 
   const handleRedeemNow = async () => {
-    if (!revealedReward) {
-      return;
-    }
+    if (!revealedReward) return;
 
     try {
       setIsRedeeming(true);
+
       const response = await gameService.redeemReward(revealedReward.id);
+
       if (!response.success || !response.coupon) {
         throw new Error(response.message || "Unable to redeem reward");
       }
 
       setRevealedReward(null);
+
       router.replace({
         pathname: "/(Game)/coupon",
         params: { couponId: response.coupon.id },
@@ -159,55 +242,113 @@ export default function GameHome() {
     }
   };
 
-  const logoUrl =
-    revealedReward?.offer.vendorName
-      ? vendors.find((item) => item.name === revealedReward.offer.vendorName)?.imageUrl ||
-        null
-      : null;
+  const logoUrl = revealedReward?.offer.vendorName
+    ? vendors.find((item) => item.name === revealedReward.offer.vendorName)
+        ?.imageUrl || null
+    : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.title}>Select 1 Coin to Reveal Your Reward</Text>
+
         <Text style={styles.subtitle}>{instructionText}</Text>
 
-        <View style={styles.coinRow}>
-          {COINS.map((coin) => (
+        {/* TOP ROW */}
+        <View style={styles.row}>
+          {COINS.slice(0, 3).map((coin) => (
             <TouchableOpacity
-              key={coin}
+              key={coin.id}
+              onPress={() => onSelectCoin(coin.id)}
+              disabled={isTapping || isRedeeming || isSaving}
               style={[
                 styles.coinButton,
-                selectedCoin === coin && styles.coinSelected,
+                {
+                  borderColor: coin.color,
+                },
+                selectedCoin === coin.id && styles.selectedCoin,
               ]}
-              onPress={() => onSelectCoin(coin)}
-              disabled={isTapping || isRedeeming || isSaving}
             >
-              <Image source={Images.logo} style={styles.coinLogo} resizeMode="contain" />
+              <AnimatedCoinLogo style={styles.coinLogo} delay={coin.id * 90} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {isTapping && <ActivityIndicator color={Theme.colors.accent_terracotta} />}
+        {/* MIDDLE ROW */}
+        <View style={styles.row}>
+          {COINS.slice(3, 6).map((coin) => (
+            <TouchableOpacity
+              key={coin.id}
+              onPress={() => onSelectCoin(coin.id)}
+              disabled={isTapping || isRedeeming || isSaving}
+              style={[
+                coin.center ? styles.centerCoin : styles.coinButton,
+                {
+                  borderColor: coin.color,
+                },
+                selectedCoin === coin.id && styles.selectedCoin,
+              ]}
+            >
+              <AnimatedCoinLogo
+                style={coin.center ? styles.centerCoinLogo : styles.coinLogo}
+                delay={coin.id * 90}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* BOTTOM ROW */}
+        <View style={styles.bottomRow}>
+          <TouchableOpacity
+            onPress={() => onSelectCoin(7)}
+            disabled={isTapping || isRedeeming || isSaving}
+            style={[
+              styles.coinButton,
+              {
+                borderColor: "#00E5FF",
+              },
+              selectedCoin === 7 && styles.selectedCoin,
+            ]}
+          >
+            <AnimatedCoinLogo style={styles.coinLogo} delay={7 * 90} />
+          </TouchableOpacity>
+        </View>
+
+        {isTapping && (
+          <ActivityIndicator
+            size="large"
+            color={Theme.colors.accent_terracotta}
+          />
+        )}
       </View>
 
+      {/* MODAL */}
       <Modal transparent visible={!!revealedReward} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>🎉 Congratulations!</Text>
+
             <Text style={styles.modalSubtitle}>You won:</Text>
+
             <View style={styles.rewardBadgeRow}>
               {logoUrl ? (
-                <Image
-                  source={{ uri: logoUrl }}
-                  style={styles.logoImage}
-                />
+                <Image source={{ uri: logoUrl }} style={styles.logoImage} />
               ) : null}
-              <Text style={styles.rewardVendor}>{revealedReward?.offer.vendorName}</Text>
+
+              <Text style={styles.rewardVendor}>
+                {revealedReward?.offer.vendorName}
+              </Text>
             </View>
+
             <Text style={styles.rewardText}>{revealedReward?.offer.title}</Text>
-            <Text style={styles.rewardMeta}>Discount: {revealedReward?.offer.discount}%</Text>
+
             <Text style={styles.rewardMeta}>
-              Expires: {new Date(revealedReward?.expiresAt || "").toLocaleDateString()}
+              Discount: {revealedReward?.offer.discount}%
+            </Text>
+
+            <Text style={styles.rewardMeta}>
+              Expires:{" "}
+              {new Date(revealedReward?.expiresAt || "").toLocaleDateString()}
             </Text>
 
             <View style={styles.modalButtons}>
@@ -220,6 +361,7 @@ export default function GameHome() {
                   {isSaving ? "Saving..." : "Save for Later"}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={handleRedeemNow}
@@ -240,128 +382,165 @@ export default function GameHome() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Theme.colors.background_cream,
+    backgroundColor: "#F5F5F5",
   },
+
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 16,
+    alignItems: "center",
+    paddingTop: 30,
+    gap: 25,
   },
+
   title: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
+    color: "#111",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
+
   subtitle: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 14,
+    fontSize: 15,
+    color: "#666",
     fontWeight: "500",
   },
-  coinRow: {
+
+  row: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 16,
-    gap: 14,
+    gap: 20,
   },
-  coinButton: {
-    width: 92,
-    height: 112,
+
+  bottomRow: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 22,
-    backgroundColor: Theme.colors.background_beige,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
   },
-  coinSelected: {
-    transform: [{ scale: 1.06 }],
-    opacity: 0.92,
-    borderColor: Theme.colors.accent_terracotta,
+
+  coinButton: {
+    width: 110,
+    height: 110,
+    borderRadius: 60,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 4,
   },
+
+  centerCoin: {
+    width: 135,
+    height: 135,
+    borderRadius: 70,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 5,
+  },
+
+  selectedCoin: {
+    transform: [{ scale: 1.05 }],
+    opacity: 0.9,
+  },
+
   coinLogo: {
-    width: 70,
-    height: 70,
-    resizeMode: "contain",
+    width: 106,
+    height: 106,
   },
+
+  centerCoinLogo: {
+    width: 130,
+    height: 130,
+  },
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: Theme.colors.text_earth,
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
+
   modalCard: {
-    backgroundColor: Theme.colors.background_beige,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#FFF",
+    borderRadius: 18,
+    padding: 20,
     gap: 12,
   },
+
   modalTitle: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "700",
+    color: "#111",
+    textAlign: "center",
   },
+
   modalSubtitle: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    color: "#777",
+    textAlign: "center",
   },
-  rewardText: {
-    color: Theme.colors.accent_terracotta,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  rewardMeta: {
-    color: Theme.colors.text_brown_gray,
-    fontSize: 13,
-    fontWeight: "600",
-  },
+
   rewardBadgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-  },
-  logoImage: {
-    // width: 28,
-    // height: 28,
-    // borderRadius: 14,
-    // backgroundColor: Theme.colors.background_sand,
-  },
-  rewardVendor: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  modalButtons: {
+    justifyContent: "center",
     gap: 10,
     marginTop: 8,
   },
-  primaryButton: {
-    backgroundColor: Theme.colors.accent_terracotta,
-    borderRadius: 10,
-    alignItems: "center",
-    paddingVertical: 12,
+
+  logoImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
+
+  rewardVendor: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#222",
+  },
+
+  rewardText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#E85D04",
+    textAlign: "center",
+  },
+
+  rewardMeta: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+
+  modalButtons: {
+    gap: 12,
+    marginTop: 12,
+  },
+
+  primaryButton: {
+    backgroundColor: "#E85D04",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
   primaryButtonText: {
-    color: Theme.colors.background_beige,
-    fontSize: 15,
+    color: "#FFF",
+    fontSize: 16,
     fontWeight: "700",
   },
+
   secondaryButton: {
-    backgroundColor: Theme.colors.background_sand,
-    borderRadius: 10,
+    backgroundColor: "#EFEFEF",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    paddingVertical: 12,
   },
+
   secondaryButtonText: {
-    color: Theme.colors.text_charcoal,
-    fontSize: 15,
+    color: "#222",
+    fontSize: 16,
     fontWeight: "700",
   },
 });
